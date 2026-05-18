@@ -1,8 +1,11 @@
 .PHONY: tests-one-shot tests-repeatable
 
-REMOTE  ?= http://127.0.0.1:26657
-CHAINID ?= test
-FUNDER  ?= ./funders/test-13.sh
+REMOTE           ?= http://127.0.0.1:26657
+CHAINID          ?= test
+FUNDER           ?= ./funders/test-13.sh
+FUNDER_MNEMONIC  ?= source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
+
+export FUNDER_MNEMONIC
 
 # Directories that expose the 4 required Makefile rules.
 CONTRIBUTORS := $(wildcard */Makefile)

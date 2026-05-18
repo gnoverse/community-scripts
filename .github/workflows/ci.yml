@@ -6,13 +6,15 @@ on:
   pull_request:
     branches: [main]
 
-# Required repository variables:
-#   vars.FUNDER_MNEMONIC  — mnemonic of the funder account
-#                           (defaults to the public test1 mnemonic if not set)
+# Optional repository variable:
+#   vars.FUNDER_MNEMONIC — mnemonic of the funder account (test1)
+#   Defaults to the public test1 mnemonic if not set.
+#   Each test run generates a fresh throwaway account funded by test1.
+#   No per-contributor secret is needed.
 
 jobs:
   tests-one-shot:
-    name: One-shot tests — ${{ matrix.network.name }}
+    name: One-shot — ${{ matrix.network.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -28,8 +30,6 @@ jobs:
 
       - name: Run one-shot tests
         env:
-          REMOTE: ${{ matrix.network.remote }}
-          CHAINID: ${{ matrix.network.chainid }}
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-one-shot \
@@ -38,7 +38,7 @@ jobs:
             FUNDER=${{ matrix.network.funder }}
 
   tests-repeatable:
-    name: Repeatable tests — ${{ matrix.network.name }}
+    name: Repeatable — ${{ matrix.network.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,8 +54,6 @@ jobs:
 
       - name: Run repeatable tests
         env:
-          REMOTE: ${{ matrix.network.remote }}
-          CHAINID: ${{ matrix.network.chainid }}
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-repeatable \
