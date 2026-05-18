@@ -11,6 +11,6 @@ RUN chmod +x run_tests.sh \
 
 ENV REMOTE=http://127.0.0.1:26657
 ENV CHAINID=test
-ENV FUND_AMOUNT=100000000ugnot
+ENV FUND_AMOUNT=50000000ugnot
 
 ENTRYPOINT ["/bin/sh", "/tests/run_tests.sh"]

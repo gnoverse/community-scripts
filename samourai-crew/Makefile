@@ -4,7 +4,7 @@ REMOTE  ?= http://127.0.0.1:26657
 CHAINID ?= test
 IMAGE   := $(shell basename $(CURDIR))
 
-FUND_AMOUNT_ONE_SHOT   := 100000000ugnot
+FUND_AMOUNT_ONE_SHOT   := 50000000ugnot
 FUND_AMOUNT_REPEATABLE := 10000000ugnot
 
 list-funding-one-shot:

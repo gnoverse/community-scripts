@@ -7,7 +7,7 @@ FUNDER_MNEMONIC ?= source bonus chronic canvas draft south burst lottery vacant 
 export FUNDER_MNEMONIC
 
 # Contributor subdirectories are detected automatically.
-CONTRIB_DIRS := $(patsubst %/Makefile,%,$(wildcard */Makefile))
+CONTRIB_DIRS := $(filter-out _%, $(patsubst %/Makefile,%,$(wildcard */Makefile)))
 
 tests-one-shot:
 	@for dir in $(CONTRIB_DIRS); do \
