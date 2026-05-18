@@ -11,63 +11,94 @@ This repository lets contributors package their own tests and run them against a
 ```text
 community-scripts/
 ├── Makefile                   # root orchestrator
+├── _template/
+│   └── Makefile               # copy-paste template for new contributors
 ├── funders/
-│   └── <network>.sh           # scripts that fund test accounts before a run
+│   └── <network>.sh           # utility scripts to fund accounts manually
 └── <contributor>/
     ├── Makefile               # exposes the 4 required rules (see below)
-    └── Dockerfile             # self-contained test runner (gnokey + scripts)
+    └── Dockerfile             # self-contained test runner (any language)
 ```
-
-Each contributor lives in their own subdirectory and is fully autonomous. The only shared contract is a **Makefile interface**.
 
 ## Makefile interface
 
 Every contributor subdirectory must expose these four rules:
 
-| Rule                      | Description                                                |
-| ------------------------- | ---------------------------------------------------------- |
-| `list-funding-one-shot`   | Prints addresses that need funding before one-shot tests   |
-| `list-funding-repeatable` | Prints addresses that need funding before repeatable tests |
-| `tests-one-shot`          | Runs tests that are not idempotent (e.g. realm deploys)    |
-| `tests-repeatable`        | Runs tests that can be re-executed safely                  |
+| Rule                      | Description                                              |
+| ------------------------- | -------------------------------------------------------- |
+| `list-funding-one-shot`   | Prints the amount of ugnot needed for one-shot tests     |
+| `list-funding-repeatable` | Prints the amount of ugnot needed for repeatable tests   |
+| `tests-one-shot`          | Runs tests that deploy on-chain state (realm deploys...) |
+| `tests-repeatable`        | Runs tests that can be re-executed safely                |
 
-All rules accept a `REMOTE` variable (default: `http://127.0.0.1:26657`) and a `CHAINID` variable.
+All rules accept a `REMOTE` variable (default: `https://rpc.test-13-aeddi-1.gnoland.network`) and a `CHAINID` variable.
 
-Contributors may add any extra rules on top of these four.
+Before each run, a fresh throwaway wallet is automatically generated and funded by the `test1` faucet account. No pre-existing wallet or secret is required.
 
 ## Running tests
 
-From the root, using the orchestrator:
+From the root, against test-13:
 
 ```sh
-# One-shot tests against test-13
-make tests-one-shot \
-  FUNDER=./funders/test-13.sh \
-  REMOTE=https://rpc.test.gno.land:443 \
-  CHAINID=test-13
-
-# Repeatable tests against test-13
-make tests-repeatable \
-  FUNDER=./funders/test-13.sh \
-  REMOTE=https://rpc.test.gno.land:443 \
-  CHAINID=test-13
+make tests-one-shot
+make tests-repeatable
 ```
 
-Or directly from a contributor subdirectory:
+Against a different network:
+
+```sh
+make tests-one-shot REMOTE=https://rpc.test12.testnets.gno.land CHAINID=test12
+```
+
+Directly from a contributor subdirectory:
 
 ```sh
 cd samourai-crew
-make tests-one-shot REMOTE=https://rpc.test.gno.land:443 CHAINID=test-13
+make tests-one-shot
 ```
 
-## Contributing
+## Adding your own tests
 
-1. Create a subdirectory with your name or team name
-2. Add a `Makefile` exposing the four required rules and a `Dockerfile` containing your test runner
-3. No dependencies outside of `make` and `docker`
+### 1. Create your directory
+
+```sh
+cp -r _template my-name
+```
+
+### 2. Edit the Makefile
+
+Open `my-name/Makefile` and adjust the funding amounts to match your tests' gas needs:
+
+```makefile
+FUND_AMOUNT_ONE_SHOT   := 30000000ugnot   # ~30 transactions at 1M ugnot each
+FUND_AMOUNT_REPEATABLE := 10000000ugnot
+```
+
+### 3. Write your Dockerfile
+
+Your `Dockerfile` must produce an image that:
+
+- accepts `one-shot` or `repeatable` as a command argument
+- reads `REMOTE`, `CHAINID`, `FUNDER_MNEMONIC`, and `FUND_AMOUNT` from env
+- generates a throwaway wallet, funds it, and runs the tests
+
+The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew/` for a shell-based example.
+
+### 4. What your container receives at runtime
+
+| Variable          | Description                                 |
+| ----------------- | ------------------------------------------- |
+| `REMOTE`          | RPC endpoint of the target chain            |
+| `CHAINID`         | Chain ID                                    |
+| `FUNDER_MNEMONIC` | test1 mnemonic — used to fund your wallet   |
+| `FUND_AMOUNT`     | Amount to fund (from your `list-funding-*`) |
+
+### 5. No secrets needed
+
+A fresh throwaway wallet is generated inside the container at each run, funded by `test1` (a public faucet account on every gnoland testnet), and discarded after the run.
 
 ## Current contributors
 
-| Directory         | Description                                    |
-| ----------------- | ---------------------------------------------- |
-| `samourai-crew`   | GnoVM audit scripts and E2E transaction tests  |
+| Directory       | Description                                   |
+| --------------- | --------------------------------------------- |
+| `samourai-crew` | GnoVM audit scripts and E2E transaction tests |
