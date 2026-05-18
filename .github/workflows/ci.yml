@@ -7,10 +7,11 @@ on:
     branches: [main]
 
 # Optional repository variable:
-#   vars.FUNDER_MNEMONIC — mnemonic of the funder account (test1)
+#   vars.FUNDER_MNEMONIC — mnemonic of the test1 faucet account.
 #   Defaults to the public test1 mnemonic if not set.
-#   Each test run generates a fresh throwaway account funded by test1.
-#   No per-contributor secret is needed.
+#
+# No per-contributor secret is needed. Each test run generates a fresh
+# throwaway wallet, funds it from test1, and discards it after the run.
 
 jobs:
   tests-one-shot:
@@ -23,7 +24,6 @@ jobs:
           - name: test-13
             remote: https://rpc.test.gno.land:443
             chainid: test-13
-            funder: ./funders/test-13.sh
 
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +34,7 @@ jobs:
         run: |
           make tests-one-shot \
             REMOTE=${{ matrix.network.remote }} \
-            CHAINID=${{ matrix.network.chainid }} \
-            FUNDER=${{ matrix.network.funder }}
+            CHAINID=${{ matrix.network.chainid }}
 
   tests-repeatable:
     name: Repeatable — ${{ matrix.network.name }}
@@ -47,7 +46,6 @@ jobs:
           - name: test-13
             remote: https://rpc.test.gno.land:443
             chainid: test-13
-            funder: ./funders/test-13.sh
 
     steps:
       - uses: actions/checkout@v4
@@ -58,5 +56,4 @@ jobs:
         run: |
           make tests-repeatable \
             REMOTE=${{ matrix.network.remote }} \
-            CHAINID=${{ matrix.network.chainid }} \
-            FUNDER=${{ matrix.network.funder }}
+            CHAINID=${{ matrix.network.chainid }}

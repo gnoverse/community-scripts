@@ -3,27 +3,37 @@
 #   one-shot   — audit scripts + e2e tests that deploy on-chain state
 #   repeatable — e2e tests safe to re-run on any chain state
 #   (no arg)   — runs both
+#
+# Expected env vars (injected by the Makefile):
+#   REMOTE           — RPC endpoint
+#   CHAINID          — chain ID
+#   FUNDER_MNEMONIC  — test1 mnemonic used to fund the throwaway account
+#   FUND_AMOUNT      — ugnot to send to the throwaway account
 
 MODE="${1:-all}"
 
 export REMOTE="${REMOTE:-http://127.0.0.1:26657}"
 export CHAINID="${CHAINID:-test}"
 export GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey}"
-export KEY="samourai-crew"
-export PASSWORD="samourai1234"
-export KEY_ADDR="${KEY_ADDR:-g1hvl0529gtj4fgtsuaurg4hcruuya2l9nuh04uj}"
-TEST_MNEMONIC="${TEST_MNEMONIC:-struggle video lamp correct music switch disease leisure ski crime memory hen daughter wrist success law embrace toward grocery hotel search gift retreat belt}"
+FUNDER_MNEMONIC="${FUNDER_MNEMONIC:-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast}"
+FUNDER_KEY="funder"
+FUNDER_PASSWORD="test1234"
+FUNDER_ADDR="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
+export KEY="runner"
+export PASSWORD="runner1234"
+FUND_AMOUNT="${FUND_AMOUNT:-100000000ugnot}"
 
-echo "Remote : $REMOTE"
-echo "Chain  : $CHAINID"
-echo "Mode   : $MODE"
+echo "Remote      : $REMOTE"
+echo "Chain       : $CHAINID"
+echo "Mode        : $MODE"
+echo "Fund amount : $FUND_AMOUNT"
 echo ""
 
 # --- connectivity check ---
 echo "Checking connectivity..."
 RETRIES=10
 while [ "$RETRIES" -gt 0 ]; do
-    if gnokey query bank/balances/"$KEY_ADDR" -remote="$REMOTE" > /dev/null 2>&1; then
+    if gnokey query bank/balances/"$FUNDER_ADDR" -remote="$REMOTE" > /dev/null 2>&1; then
         echo "Connected."
         break
     fi
@@ -32,10 +42,37 @@ while [ "$RETRIES" -gt 0 ]; do
     sleep 3
 done
 
-# --- import test account ---
-printf "%s\n%s\n%s\n" "$TEST_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
+# --- import funder (test1) ---
+printf "%s\n%s\n%s\n" "$FUNDER_MNEMONIC" "$FUNDER_PASSWORD" "$FUNDER_PASSWORD" | \
+    gnokey add "$FUNDER_KEY" -recover -insecure-password-stdin=true \
+    -home "$GNOKEY_HOME" > /dev/null 2>&1
+
+# --- generate throwaway test account ---
+echo "Generating throwaway test account..."
+RUNNER_MNEMONIC=$(gnokey generate)
+printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     gnokey add "$KEY" -recover -insecure-password-stdin=true \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
+
+export KEY_ADDR
+KEY_ADDR=$(gnokey list -home "$GNOKEY_HOME" 2>/dev/null | awk -v k="$KEY" '$1==k {print $3}')
+echo "Runner      : $KEY_ADDR"
+
+# --- fund runner from test1 ---
+echo "Funding runner (${FUND_AMOUNT})..."
+echo "$FUNDER_PASSWORD" | gnokey maketx send \
+    -to "$KEY_ADDR" \
+    -send "$FUND_AMOUNT" \
+    -gas-fee 1000000ugnot \
+    -gas-wanted 2000000 \
+    -broadcast \
+    -chainid "$CHAINID" \
+    -remote "$REMOTE" \
+    -insecure-password-stdin=true \
+    -home "$GNOKEY_HOME" \
+    "$FUNDER_KEY" > /dev/null || { echo "ERROR: could not fund runner"; exit 1; }
+echo "Runner funded."
+echo ""
 
 # --- test runner ---
 PASS=0; FAIL=0; KNOWN=0; REPORT=""

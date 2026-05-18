@@ -4,6 +4,8 @@ REMOTE  ?= http://127.0.0.1:26657
 CHAINID ?= test
 IMAGE   := $(shell basename $(CURDIR))
 
+# Amount of ugnot needed to run the tests.
+# A fresh throwaway wallet is generated and funded with this amount before each run.
 FUND_AMOUNT_ONE_SHOT   := 100000000ugnot
 FUND_AMOUNT_REPEATABLE := 10000000ugnot
 
