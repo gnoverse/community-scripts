@@ -4,13 +4,13 @@ REMOTE  ?= http://127.0.0.1:26657
 CHAINID ?= test
 IMAGE   := samourai-crew-tests
 
-# Funding is handled internally: run_tests.sh generates a fresh account
-# and funds it from test1 at startup. Nothing to list here.
+# Declare the test account address and the funding amount needed per run.
+# The root Makefile passes these to the funder script before running tests.
 list-funding-one-shot:
-	@true
+	@echo "g1hvl0529gtj4fgtsuaurg4hcruuya2l9nuh04uj 100000000ugnot"
 
 list-funding-repeatable:
-	@true
+	@echo "g1hvl0529gtj4fgtsuaurg4hcruuya2l9nuh04uj 10000000ugnot"
 
 build:
 	docker build -t $(IMAGE) .
@@ -19,12 +19,10 @@ tests-one-shot: build
 	docker run --rm \
 		-e REMOTE=$(REMOTE) \
 		-e CHAINID=$(CHAINID) \
-		-e FUNDER_MNEMONIC \
 		$(IMAGE) one-shot
 
 tests-repeatable: build
 	docker run --rm \
 		-e REMOTE=$(REMOTE) \
 		-e CHAINID=$(CHAINID) \
-		-e FUNDER_MNEMONIC \
 		$(IMAGE) repeatable

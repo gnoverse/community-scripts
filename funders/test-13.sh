@@ -1,23 +1,24 @@
 #!/bin/sh
-# Funds a list of addresses from the test1 faucet account on test-13.
-# Usage: test-13.sh <addr1> [addr2] ...
+# Funds addresses from the test1 faucet account on test-13.
+# Usage: test-13.sh <addr1> <amount1> [<addr2> <amount2> ...]
+#
+# Arguments are address/amount pairs as output by each contributor's
+# list-funding-* Makefile rule (e.g. "g1abc... 100000000ugnot").
 #
 # Required env:
-#   REMOTE          — RPC endpoint (default: https://rpc.test.gno.land:443)
-#   CHAINID         — chain ID      (default: test-13)
-#   FUNDER_MNEMONIC — funder mnemonic (default: test1 public mnemonic)
-#   AMOUNT          — ugnot to send per address (default: 10000000)
+#   REMOTE          — RPC endpoint     (default: https://rpc.test.gno.land:443)
+#   CHAINID         — chain ID          (default: test-13)
+#   FUNDER_MNEMONIC — funder mnemonic   (default: test1 public mnemonic)
 
 REMOTE="${REMOTE:-https://rpc.test.gno.land:443}"
 CHAINID="${CHAINID:-test-13}"
 FUNDER_MNEMONIC="${FUNDER_MNEMONIC:-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast}"
-AMOUNT="${AMOUNT:-10000000}"
 PASSWORD="test1234"
 GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey-funder}"
 FUNDER_KEY="funder"
 
-if [ "$#" -eq 0 ]; then
-    echo "Usage: $0 <addr1> [addr2] ..."
+if [ "$#" -eq 0 ] || [ $(( $# % 2 )) -ne 0 ]; then
+    echo "Usage: $0 <addr1> <amount1> [<addr2> <amount2> ...]"
     exit 1
 fi
 
@@ -31,11 +32,15 @@ fi
 
 # --- send funds to each address ---
 FAILED=0
-for ADDR in "$@"; do
-    echo -n "Funding $ADDR with ${AMOUNT}ugnot ... "
+while [ "$#" -ge 2 ]; do
+    ADDR="$1"
+    AMOUNT="$2"
+    shift 2
+
+    echo -n "Funding $ADDR with $AMOUNT ... "
     OUT=$(echo "$PASSWORD" | gnokey maketx send \
         -to "$ADDR" \
-        -send "${AMOUNT}ugnot" \
+        -send "$AMOUNT" \
         -gas-fee 1000000ugnot \
         -gas-wanted 2000000 \
         -broadcast \
