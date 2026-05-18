@@ -21,7 +21,7 @@ FUNDER_PASSWORD="test1234"
 FUNDER_ADDR="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
 export KEY="runner"
 export PASSWORD="runner1234"
-FUND_AMOUNT="${FUND_AMOUNT:-100000000ugnot}"
+FUND_AMOUNT="${FUND_AMOUNT:-50000000ugnot}"
 
 echo "Remote      : $REMOTE"
 echo "Chain       : $CHAINID"

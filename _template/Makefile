@@ -1,5 +1,7 @@
 .PHONY: list-funding-one-shot list-funding-repeatable tests-one-shot tests-repeatable build
 
+# Override REMOTE and CHAINID to target a live network:
+#   make tests-one-shot REMOTE=https://rpc.test12.testnets.gno.land CHAINID=test12
 REMOTE  ?= http://127.0.0.1:26657
 CHAINID ?= test
 IMAGE   := $(shell basename $(CURDIR))

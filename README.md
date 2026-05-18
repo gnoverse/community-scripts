@@ -13,8 +13,6 @@ community-scripts/
 ├── Makefile                   # root orchestrator
 ├── _template/
 │   └── Makefile               # copy-paste template for new contributors
-├── funders/
-│   └── <network>.sh           # utility scripts to fund accounts manually
 └── <contributor>/
     ├── Makefile               # exposes the 4 required rules (see below)
     └── Dockerfile             # self-contained test runner (any language)
