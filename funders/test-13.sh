@@ -10,8 +10,8 @@
 #   CHAINID         — chain ID          (default: test-13)
 #   FUNDER_MNEMONIC — funder mnemonic   (default: test1 public mnemonic)
 
-REMOTE="${REMOTE:-https://rpc.test12.testnets.gno.land}"
-CHAINID="${CHAINID:-test12}"
+REMOTE="${REMOTE:-https://rpc.test.gno.land:443}"
+CHAINID="${CHAINID:-test-13}"
 FUNDER_MNEMONIC="${FUNDER_MNEMONIC:-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast}"
 PASSWORD="test1234"
 GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey-funder}"

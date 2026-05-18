@@ -1,7 +1,7 @@
 .PHONY: tests-one-shot tests-repeatable
 
-REMOTE          ?= https://rpc.test12.testnets.gno.land
-CHAINID         ?= test12
+REMOTE          ?= https://rpc.test.gno.land:443
+CHAINID         ?= test-13
 FUNDER_MNEMONIC ?= source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
 
 export FUNDER_MNEMONIC

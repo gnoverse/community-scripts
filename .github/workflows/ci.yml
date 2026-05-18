@@ -21,9 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         network:
-          - name: test12
-            remote: https://rpc.test12.testnets.gno.land
-            chainid: test12
+          - name: test-13
+            remote: https://rpc.test.gno.land:443
+            chainid: test-13
 
     steps:
       - uses: actions/checkout@v4
@@ -43,9 +43,9 @@ jobs:
       fail-fast: false
       matrix:
         network:
-          - name: test12
-            remote: https://rpc.test12.testnets.gno.land
-            chainid: test12
+          - name: test-13
+            remote: https://rpc.test.gno.land:443
+            chainid: test-13
 
     steps:
       - uses: actions/checkout@v4
