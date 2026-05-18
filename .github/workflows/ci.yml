@@ -22,7 +22,7 @@ jobs:
       matrix:
         network:
           - name: test-13
-            remote: https://rpc.test.gno.land:443
+            remote: https://rpc.test-13-aeddi-1.gnoland.network
             chainid: test-13
 
     steps:
@@ -44,7 +44,7 @@ jobs:
       matrix:
         network:
           - name: test-13
-            remote: https://rpc.test.gno.land:443
+            remote: https://rpc.test-13-aeddi-1.gnoland.network
             chainid: test-13
 
     steps:
