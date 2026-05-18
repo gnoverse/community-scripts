@@ -1,0 +1,64 @@
+name: Community Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Required repository variables:
+#   vars.FUNDER_MNEMONIC  — mnemonic of the funder account
+#                           (defaults to the public test1 mnemonic if not set)
+
+jobs:
+  tests-one-shot:
+    name: One-shot tests — ${{ matrix.network.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        network:
+          - name: test-13
+            remote: https://rpc.test.gno.land:443
+            chainid: test-13
+            funder: ./funders/test-13.sh
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run one-shot tests
+        env:
+          REMOTE: ${{ matrix.network.remote }}
+          CHAINID: ${{ matrix.network.chainid }}
+          FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
+        run: |
+          make tests-one-shot \
+            REMOTE=${{ matrix.network.remote }} \
+            CHAINID=${{ matrix.network.chainid }} \
+            FUNDER=${{ matrix.network.funder }}
+
+  tests-repeatable:
+    name: Repeatable tests — ${{ matrix.network.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        network:
+          - name: test-13
+            remote: https://rpc.test.gno.land:443
+            chainid: test-13
+            funder: ./funders/test-13.sh
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run repeatable tests
+        env:
+          REMOTE: ${{ matrix.network.remote }}
+          CHAINID: ${{ matrix.network.chainid }}
+          FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
+        run: |
+          make tests-repeatable \
+            REMOTE=${{ matrix.network.remote }} \
+            CHAINID=${{ matrix.network.chainid }} \
+            FUNDER=${{ matrix.network.funder }}
