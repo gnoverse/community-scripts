@@ -55,7 +55,7 @@ printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
 
 export KEY_ADDR
-KEY_ADDR=$(gnokey list -home "$GNOKEY_HOME" 2>/dev/null | awk -v k="$KEY" '$1==k {print $3}')
+KEY_ADDR=$(gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep "^[0-9]*\. $KEY " | grep -o 'g1[a-z0-9]*')
 echo "Runner      : $KEY_ADDR"
 
 # --- fund runner from test1 ---
