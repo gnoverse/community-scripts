@@ -1,14 +1,16 @@
 #!/bin/sh
 # Usage: run_tests.sh [one-shot|repeatable]
-#   one-shot   — audit scripts + e2e tests that deploy on-chain state
+#   one-shot   — audit scripts + e2e tests + stress tests
 #   repeatable — e2e tests safe to re-run on any chain state
 #   (no arg)   — runs both
 #
 # Expected env vars (injected by the Makefile):
-#   REMOTE           — RPC endpoint
-#   CHAINID          — chain ID
-#   FUNDER_MNEMONIC  — test1 mnemonic used to fund the throwaway account
-#   FUND_AMOUNT      — ugnot to send to the throwaway account
+#   REMOTE                 — primary RPC endpoint
+#   CHAINID                — chain ID
+#   FUNDER_MNEMONIC        — test1 mnemonic used to fund the throwaway account
+#   FUND_AMOUNT            — ugnot to send to the throwaway runner account
+#   REMOTES                — comma-separated RPC list for stress tests (optional)
+#   FUND_AMOUNT_PER_WALLET — ugnot per stress wallet (optional)
 
 MODE="${1:-all}"
 
@@ -22,6 +24,8 @@ FUNDER_ADDR="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
 export KEY="runner"
 export PASSWORD="runner1234"
 FUND_AMOUNT="${FUND_AMOUNT:-50000000ugnot}"
+export REMOTES="${REMOTES:-$REMOTE}"
+export FUND_AMOUNT_PER_WALLET="${FUND_AMOUNT_PER_WALLET:-15000000ugnot}"
 
 echo "Remote      : $REMOTE"
 echo "Chain       : $CHAINID"
@@ -83,7 +87,7 @@ run_test() {
     KNOWN_NOTE="$3"
     echo ""
     echo "--- $NAME ---"
-    if sh "$SCRIPT"; then
+    if "$SCRIPT"; then
         PASS=$((PASS + 1))
         REPORT="${REPORT}  [PASS]  $NAME\n"
     elif [ -n "$KNOWN_NOTE" ]; then
@@ -111,6 +115,12 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     echo "=== E2E Tests (one-shot) ==="
     run_test "e2e_counter"        /tests/e2e/e2e_counter.sh
     run_test "e2e_mempool_stress" /tests/e2e/e2e_mempool_stress.sh
+
+    echo ""
+    echo "=== Stress Tests ==="
+    run_test "sybil_chaos"        /tests/stress/sybil_chaos.sh
+    run_test "sybil_precision"    /tests/stress/sybil_precision.sh
+    run_test "sybil_salted_chaos" /tests/stress/sybil_salted_chaos.sh
 fi
 
 if [ "$MODE" = "repeatable" ] || [ "$MODE" = "all" ]; then
