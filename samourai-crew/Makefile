@@ -6,23 +6,24 @@ REMOTE                 ?= $(if $(REMOTES),$(firstword $(subst $(comma), ,$(REMOT
 CHAINID                ?= test
 IMAGE                  := $(shell basename $(CURDIR))
 
-# TODO: replace with your actual addresses after setting mnemonics in Dockerfile
-RUNNER_ADDR   := TODO_REPLACE_RUNNER_ADDR
-STRESS_ADDR_1 := TODO_REPLACE_STRESS_ADDR_1
-STRESS_ADDR_2 := TODO_REPLACE_STRESS_ADDR_2
-STRESS_ADDR_3 := TODO_REPLACE_STRESS_ADDR_3
+# 3 wallets — wallet 1 is both the runner and stress_1
+# TODO: replace with your actual addresses
+ADDR_1 := TODO_REPLACE_ADDR_1
+ADDR_2 := TODO_REPLACE_ADDR_2
+ADDR_3 := TODO_REPLACE_ADDR_3
 
-FUND_AMOUNT_RUNNER     := 30000000ugnot
+# wallet 1 gets more funds: covers audit/e2e + stress role
+FUND_AMOUNT_WALLET_1   := 50000000ugnot
 FUND_AMOUNT_PER_WALLET := 15000000ugnot
 FUND_AMOUNT_REPEATABLE := 10000000ugnot
 
 ## list-funding-one-shot   : print addresses and amounts to fund before one-shot tests
 list-funding-one-shot:
-	@echo "$(RUNNER_ADDR) $(FUND_AMOUNT_RUNNER) $(STRESS_ADDR_1) $(FUND_AMOUNT_PER_WALLET) $(STRESS_ADDR_2) $(FUND_AMOUNT_PER_WALLET) $(STRESS_ADDR_3) $(FUND_AMOUNT_PER_WALLET)"
+	@echo "$(ADDR_1) $(FUND_AMOUNT_WALLET_1) $(ADDR_2) $(FUND_AMOUNT_PER_WALLET) $(ADDR_3) $(FUND_AMOUNT_PER_WALLET)"
 
 ## list-funding-repeatable : print addresses and amounts to fund before repeatable tests
 list-funding-repeatable:
-	@echo "$(RUNNER_ADDR) $(FUND_AMOUNT_REPEATABLE)"
+	@echo "$(ADDR_1) $(FUND_AMOUNT_REPEATABLE)"
 
 ## build                   : build the Docker test image
 build:
