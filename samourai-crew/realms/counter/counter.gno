@@ -2,10 +2,20 @@ package counter
 
 import "strconv"
 
-var count int
+type Counter struct {
+	Value int
+}
 
-func Increment() { count++ }
+func (c *Counter) Inc() {
+	c.Value++
+}
 
-func Render(_ string) string {
-	return strconv.Itoa(count)
+var c Counter
+
+func Increment() {
+	c.Inc()
+}
+
+func Render(path string) string {
+	return "Compteur Samourai : " + strconv.Itoa(c.Value)
 }
