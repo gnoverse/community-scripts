@@ -10,7 +10,8 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 REMOTES="${REMOTES:-${REMOTE:-http://127.0.0.1:26657}}"
-COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/chaos"
+SUFFIX=$(date +%s)
+COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/chaos${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
