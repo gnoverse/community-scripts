@@ -29,30 +29,42 @@ Every contributor subdirectory must expose these four rules:
 | `tests-one-shot`          | Runs tests that deploy on-chain state (realm deploys...) |
 | `tests-repeatable`        | Runs tests that can be re-executed safely                |
 
-All rules accept a `REMOTE` variable (default: `https://rpc.test-13-aeddi-1.gnoland.network`) and a `CHAINID` variable.
+All rules accept `REMOTES` (comma-separated RPC list) and `CHAINID` variables.
+`REMOTE` is automatically derived from the first entry in `REMOTES`.
 
 Before each run, a fresh throwaway wallet is automatically generated and funded by the `test1` faucet account. No pre-existing wallet or secret is required.
 
+Run `make help` from any directory to list available targets.
+
 ## Running tests
 
-From the root, against test-13:
+Against test-13 (default):
 
 ```sh
 make tests-one-shot
 make tests-repeatable
 ```
 
-Against a different network:
+Against a single custom RPC:
 
 ```sh
-make tests-one-shot REMOTE=https://rpc.test12.testnets.gno.land CHAINID=test12
+make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
+```
+
+Against multiple validator nodes (stress tests will hit each one):
+
+```sh
+make tests-one-shot \
+  REMOTES=https://rpc1.gnoland.network,https://rpc2.gnoland.network,https://rpc3.gnoland.network \
+  CHAINID=test-13
 ```
 
 Directly from a contributor subdirectory:
 
 ```sh
 cd samourai-crew
-make tests-one-shot
+make help
+make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
 ```
 
 ## Adding your own tests
@@ -81,19 +93,21 @@ container, funded from the main runner account.
 Your `Dockerfile` must produce an image that:
 
 - accepts `one-shot` or `repeatable` as a command argument
-- reads `REMOTE`, `CHAINID`, `FUNDER_MNEMONIC`, and `FUND_AMOUNT` from env
+- reads the env vars listed below
 - generates a throwaway wallet, funds it, and runs the tests
 
 The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew/` for a shell-based example.
 
 ### 4. What your container receives at runtime
 
-| Variable          | Description                                 |
-| ----------------- | ------------------------------------------- |
-| `REMOTE`          | RPC endpoint of the target chain            |
-| `CHAINID`         | Chain ID                                    |
-| `FUNDER_MNEMONIC` | test1 mnemonic — used to fund your wallet   |
-| `FUND_AMOUNT`     | Amount to fund (from your `list-funding-*`) |
+| Variable                | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| `REMOTE`                | Primary RPC endpoint (first entry of `REMOTES`)      |
+| `REMOTES`               | Comma-separated list of RPC endpoints                |
+| `CHAINID`               | Chain ID                                             |
+| `FUNDER_MNEMONIC`       | test1 mnemonic — used to fund the throwaway wallet   |
+| `FUND_AMOUNT`           | Amount to fund (from your `list-funding-*`)          |
+| `FUND_AMOUNT_PER_WALLET`| Amount per additional wallet (for multi-wallet tests)|
 
 ### 5. No secrets needed
 
@@ -101,6 +115,6 @@ A fresh throwaway wallet is generated inside the container at each run, funded b
 
 ## Current contributors
 
-| Directory       | Description                                   |
-| --------------- | --------------------------------------------- |
-| `samourai-crew` | GnoVM audit scripts and E2E transaction tests |
+| Directory       | Description                                                              |
+| --------------- | ------------------------------------------------------------------------ |
+| `samourai-crew` | GnoVM audit scripts, E2E transaction tests, and sybil stress tests       |
