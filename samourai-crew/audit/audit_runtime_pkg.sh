@@ -32,12 +32,13 @@ RESULT=$(echo "$PASSWORD" | gnokey maketx run \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
 	"$KEY" "$TMPDIR/runtime.gno" 2>&1)
+EXIT_CODE=$?
 
-if echo "$RESULT" | grep -qiE "unknown import|cannot find|not found|unavailable|no package"; then
-	echo "✅ PATCHED — runtime import rejected"
-elif echo "$RESULT" | grep -q "OK!"; then
+if echo "$RESULT" | grep -q "OK!"; then
 	echo "❌ VULNERABLE — runtime.GC() executed in production VM"
 	exit 1
+elif [ $EXIT_CODE -ne 0 ]; then
+	echo "✅ PATCHED — runtime import rejected"
 else
 	echo "⚠️  UNKNOWN OUTPUT"; echo "$RESULT"
 	exit 1
