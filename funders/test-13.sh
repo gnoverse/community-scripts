@@ -32,6 +32,16 @@ while [ "$#" -ge 2 ]; do
     AMOUNT="$2"
     shift 2
 
+    # Check current balance — skip if already sufficient
+    NEEDED=$(echo "$AMOUNT" | grep -o '^[0-9]*')
+    CURRENT=$(gnokey query bank/balances/"$ADDR" -remote "$REMOTE" 2>/dev/null \
+        | grep -o '[0-9]*ugnot' | grep -o '^[0-9]*')
+    CURRENT="${CURRENT:-0}"
+    if [ "$CURRENT" -ge "$NEEDED" ]; then
+        echo "Funding $ADDR ... SKIP (balance ${CURRENT}ugnot >= ${NEEDED}ugnot)"
+        continue
+    fi
+
     echo -n "Funding $ADDR with $AMOUNT ... "
     OUT=$(echo "$PASSWORD" | gnokey maketx send \
         -to "$ADDR" \

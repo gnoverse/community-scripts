@@ -8,9 +8,9 @@ IMAGE                  := $(shell basename $(CURDIR))
 
 # 3 wallets — wallet 1 is both the runner and stress_1
 # TODO: replace with your actual addresses
-ADDR_1 := TODO_REPLACE_ADDR_1
-ADDR_2 := TODO_REPLACE_ADDR_2
-ADDR_3 := TODO_REPLACE_ADDR_3
+ADDR_1 := g1hzlg063fqrq4gltql992ssjc0xzau89t5jp63w
+ADDR_2 := g174tsxfpf8zj8h3tyrz4ld690xvhcjnquls6ffc
+ADDR_3 := g19xnaenyhe88emmge4726ta43lp3n237vvuzc2n
 
 # wallet 1 gets more funds: covers audit/e2e + stress role
 FUND_AMOUNT_WALLET_1   := 50000000ugnot
