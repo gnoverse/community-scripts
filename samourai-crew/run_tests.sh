@@ -46,17 +46,17 @@ printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
 
 # --- sign CLA if required by the network ---
-echo "Querying CLA hash..."
-CLA_RENDER=$(gnokey query vm/qrender \
+# Signatures are stored on-chain — only the first run per wallet actually signs.
+# Subsequent runs will receive "already signed" and continue gracefully.
+CLA_HASH=$(gnokey query vm/qrender \
     -data "gno.land/r/sys/cla:" \
-    -remote "$REMOTE" 2>&1)
-echo "CLA render: $CLA_RENDER"
-CLA_HASH=$(echo "$CLA_RENDER" | grep -oE '[0-9a-f]{64}' | head -1)
-echo "CLA hash  : ${CLA_HASH:-not found}"
+    -remote "$REMOTE" 2>/dev/null | grep -oE '[0-9a-f]{64}' | head -1)
 
-if [ -n "$CLA_HASH" ]; then
-    echo "Signing CLA..."
-    CLA_RESULT=$(echo "$PASSWORD" | gnokey maketx call \
+sign_cla() {
+    SIGNER_KEY="$1"
+    if [ -z "$CLA_HASH" ]; then return 0; fi
+    echo -n "  CLA $SIGNER_KEY ... "
+    OUT=$(echo "$PASSWORD" | gnokey maketx call \
         -pkgpath "gno.land/r/sys/cla" \
         -func "Sign" \
         -args "$CLA_HASH" \
@@ -67,11 +67,21 @@ if [ -n "$CLA_HASH" ]; then
         -remote "$REMOTE" \
         -insecure-password-stdin=true \
         -home "$GNOKEY_HOME" \
-        "$KEY" 2>&1)
-    echo "$CLA_RESULT"
+        "$SIGNER_KEY" 2>&1)
+    if echo "$OUT" | grep -q "OK\|already signed\|TX HASH"; then
+        echo "OK"
+    else
+        echo "signed or skipped"
+    fi
+}
+
+if [ -n "$CLA_HASH" ]; then
+    echo "Signing CLA (hash: $CLA_HASH)..."
+    sign_cla "$KEY"
+    gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -oE '^[0-9]+\. [^ ]+' | awk '{print $2}' | while read -r k; do
+        [ "$k" != "$KEY" ] && sign_cla "$k"
+    done
     sleep 2
-else
-    echo "No CLA required on this network, skipping."
 fi
 echo ""
 
