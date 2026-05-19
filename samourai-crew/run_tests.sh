@@ -60,8 +60,8 @@ if [ -n "$CLA_HASH" ]; then
         -pkgpath "gno.land/r/sys/cla" \
         -func "Sign" \
         -args "$CLA_HASH" \
-        -gas-fee 100000ugnot \
-        -gas-wanted 2000000 \
+        -gas-fee 1000000ugnot \
+        -gas-wanted 5000000 \
         -broadcast \
         -chainid "$CHAINID" \
         -remote "$REMOTE" \
