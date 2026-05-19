@@ -10,8 +10,8 @@ on:
 #   vars.FUNDER_MNEMONIC — mnemonic of the test1 faucet account.
 #   Defaults to the public test1 mnemonic if not set.
 #
-# No per-contributor secret is needed. Each test run generates a fresh
-# throwaway wallet, funds it from test1, and discards it after the run.
+# The funder script runs inside a gnokey Docker container — no local
+# gnokey installation required on the runner.
 
 jobs:
   tests-one-shot:
@@ -22,7 +22,7 @@ jobs:
       matrix:
         network:
           - name: test-13
-            remote: https://rpc.test-13-aeddi-1.gnoland.network
+            remotes: https://rpc.test-13-aeddi-1.gnoland.network,https://rpc.test-13-gfanton-1.gnoland.network,https://rpc.test-13-moul-1.gnoland.network
             chainid: test-13
 
     steps:
@@ -33,7 +33,7 @@ jobs:
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-one-shot \
-            REMOTE=${{ matrix.network.remote }} \
+            REMOTES=${{ matrix.network.remotes }} \
             CHAINID=${{ matrix.network.chainid }}
 
   tests-repeatable:
@@ -44,7 +44,7 @@ jobs:
       matrix:
         network:
           - name: test-13
-            remote: https://rpc.test-13-aeddi-1.gnoland.network
+            remotes: https://rpc.test-13-aeddi-1.gnoland.network
             chainid: test-13
 
     steps:
@@ -55,5 +55,5 @@ jobs:
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-repeatable \
-            REMOTE=${{ matrix.network.remote }} \
+            REMOTES=${{ matrix.network.remotes }} \
             CHAINID=${{ matrix.network.chainid }}

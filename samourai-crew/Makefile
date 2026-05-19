@@ -6,8 +6,7 @@ REMOTE                 ?= $(if $(REMOTES),$(firstword $(subst $(comma), ,$(REMOT
 CHAINID                ?= test
 IMAGE                  := $(shell basename $(CURDIR))
 
-# 3 wallets — wallet 1 is both the runner and stress_1
-# TODO: replace with your actual addresses
+# 3 wallets — wallet 1 is both the runner (audit/e2e) and stress_1 (first RPC)
 ADDR_1 := g1hzlg063fqrq4gltql992ssjc0xzau89t5jp63w
 ADDR_2 := g174tsxfpf8zj8h3tyrz4ld690xvhcjnquls6ffc
 ADDR_3 := g19xnaenyhe88emmge4726ta43lp3n237vvuzc2n

@@ -40,10 +40,21 @@ while [ "$RETRIES" -gt 0 ]; do
     sleep 3
 done
 
-# --- import runner key ---
+# --- import all keys before CLA signing ---
 printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     gnokey add "$KEY" -recover -insecure-password-stdin=true \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
+
+if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
+    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "stress_2" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" > /dev/null 2>&1
+fi
+if [ -n "$STRESS_MNEMONIC_3" ] && [ "$STRESS_MNEMONIC_3" != "TODO_REPLACE_STRESS_MNEMONIC_3" ]; then
+    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_3" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "stress_3" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" > /dev/null 2>&1
+fi
 
 # --- sign CLA if required by the network ---
 # Signatures are stored on-chain — only the first run per wallet actually signs.
@@ -83,20 +94,6 @@ if [ -n "$CLA_HASH" ]; then
     done
     sleep 2
 fi
-echo ""
-
-# --- import stress wallet keys (stress_1 = runner, already imported above) ---
-if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_2" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
-fi
-if [ -n "$STRESS_MNEMONIC_3" ] && [ "$STRESS_MNEMONIC_3" != "TODO_REPLACE_STRESS_MNEMONIC_3" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_3" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_3" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
-fi
-
 echo ""
 
 # --- test runner ---

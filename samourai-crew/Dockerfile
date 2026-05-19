@@ -15,8 +15,6 @@ RUN chmod +x run_tests.sh \
 
 ENV REMOTE=http://127.0.0.1:26657
 ENV CHAINID=test
-ENV FUND_AMOUNT=100000000ugnot
-ENV FUND_AMOUNT_PER_WALLET=15000000ugnot
 ENV REMOTES=
 
 # 3 wallets — wallet 1 is both the runner (audit/e2e) and stress_1 (first RPC)
