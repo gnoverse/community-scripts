@@ -46,12 +46,17 @@ printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
 
 # --- sign CLA if required by the network ---
-CLA_HASH=$(gnokey query vm/qrender \
+echo "Querying CLA hash..."
+CLA_RENDER=$(gnokey query vm/qrender \
     -data "gno.land/r/sys/cla:" \
-    -remote "$REMOTE" 2>/dev/null | grep -oE '[0-9a-f]{64}' | head -1)
+    -remote "$REMOTE" 2>&1)
+echo "CLA render: $CLA_RENDER"
+CLA_HASH=$(echo "$CLA_RENDER" | grep -oE '[0-9a-f]{64}' | head -1)
+echo "CLA hash  : ${CLA_HASH:-not found}"
+
 if [ -n "$CLA_HASH" ]; then
-    echo "Signing CLA ($CLA_HASH)..."
-    echo "$PASSWORD" | gnokey maketx call \
+    echo "Signing CLA..."
+    CLA_RESULT=$(echo "$PASSWORD" | gnokey maketx call \
         -pkgpath "gno.land/r/sys/cla" \
         -func "Sign" \
         -args "$CLA_HASH" \
@@ -62,7 +67,11 @@ if [ -n "$CLA_HASH" ]; then
         -remote "$REMOTE" \
         -insecure-password-stdin=true \
         -home "$GNOKEY_HOME" \
-        "$KEY" > /dev/null 2>&1 && echo "CLA signed." || echo "CLA already signed."
+        "$KEY" 2>&1)
+    echo "$CLA_RESULT"
+    sleep 2
+else
+    echo "No CLA required on this network, skipping."
 fi
 echo ""
 
