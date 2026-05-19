@@ -78,6 +78,30 @@ echo "$FUNDER_PASSWORD" | gnokey maketx send \
     -home "$GNOKEY_HOME" \
     "$FUNDER_KEY" > /dev/null || { echo "ERROR: could not fund runner"; exit 1; }
 echo "Runner funded."
+
+# --- sign CLA (required on networks with restricted transfers) ---
+echo "Checking CLA requirement..."
+CLA_HASH=$(gnokey query vm/qrender \
+    -data "gno.land/r/sys/cla:" \
+    -remote "$REMOTE" 2>/dev/null | grep -o '"[^"]*"' | head -1 | tr -d '"')
+
+if [ -n "$CLA_HASH" ]; then
+    echo "Signing CLA ($CLA_HASH)..."
+    echo "$PASSWORD" | gnokey maketx call \
+        -pkgpath "gno.land/r/sys/cla" \
+        -func "Sign" \
+        -args "$CLA_HASH" \
+        -gas-fee 1000000ugnot \
+        -gas-wanted 1000000000 \
+        -broadcast \
+        -chainid "$CHAINID" \
+        -remote "$REMOTE" \
+        -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" \
+        "$KEY" > /dev/null 2>&1 && echo "CLA signed." || echo "CLA already signed or not required."
+else
+    echo "No CLA found on this network, skipping."
+fi
 echo ""
 
 # --- test runner ---

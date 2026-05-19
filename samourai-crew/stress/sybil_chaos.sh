@@ -54,12 +54,12 @@ for i in $(seq 1 "$N"); do
         -home "$GNOKEY_HOME" > /dev/null 2>&1
     waddr=$(gnokey list -home "$GNOKEY_HOME" 2>/dev/null | \
         grep "^[0-9]*\. $wkey " | grep -o 'g1[a-z0-9]*')
-    echo "${FUNDER_PASSWORD:-test1234}" | gnokey maketx send \
+    echo "$PASSWORD" | gnokey maketx send \
         -to "$waddr" -send "$FUND_AMOUNT_PER_WALLET" \
         -gas-fee 1000000ugnot -gas-wanted 2000000 \
         -broadcast -chainid "$CHAINID" -remote "${RPCS[0]}" \
         -insecure-password-stdin=true -home "$GNOKEY_HOME" \
-        "${FUNDER_KEY:-funder}" > /dev/null || { echo "FAIL: could not fund $wkey"; exit 1; }
+        "$KEY" > /dev/null || { echo "FAIL: could not fund $wkey"; exit 1; }
     echo "   wallet $i funded → $waddr"
 done
 
