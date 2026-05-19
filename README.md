@@ -65,7 +65,7 @@ make tests-one-shot \
 With a custom funder script:
 
 ```sh
-make tests-one-shot FUNDER=./funders/test-13.sh REMOTES=... CHAINID=test-13
+make tests-one-shot FUNDER_SCRIPT=./funders/test-13.sh REMOTES=... CHAINID=test-13
 ```
 
 Directly from a contributor subdirectory:
