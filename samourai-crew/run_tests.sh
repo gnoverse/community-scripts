@@ -45,12 +45,7 @@ printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     gnokey add "$KEY" -recover -insecure-password-stdin=true \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
 
-# --- import stress wallet keys ---
-if [ -n "$STRESS_MNEMONIC_1" ] && [ "$STRESS_MNEMONIC_1" != "TODO_REPLACE_STRESS_MNEMONIC_1" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_1" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_1" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
-fi
+# --- import stress wallet keys (stress_1 = runner, already imported above) ---
 if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
     printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \
         gnokey add "stress_2" -recover -insecure-password-stdin=true \

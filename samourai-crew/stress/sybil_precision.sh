@@ -20,11 +20,15 @@ echo ""
 
 WALLET_KEYS=()
 for i in $(seq 1 "$N"); do
-    wkey="stress_${i}"
-    if gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "^[0-9]*\. $wkey "; then
-        WALLET_KEYS+=("$wkey")
+    if [ "$i" -eq 1 ]; then
+        WALLET_KEYS+=("$KEY")
     else
-        echo "FAIL: stress key $wkey not found in keystore"; exit 1
+        wkey="stress_${i}"
+        if gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "^[0-9]*\. $wkey "; then
+            WALLET_KEYS+=("$wkey")
+        else
+            echo "FAIL: stress key $wkey not found in keystore"; exit 1
+        fi
     fi
 done
 
