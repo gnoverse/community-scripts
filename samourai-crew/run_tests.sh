@@ -61,7 +61,7 @@ if [ -n "$CLA_HASH" ]; then
         -func "Sign" \
         -args "$CLA_HASH" \
         -gas-fee 1000000ugnot \
-        -gas-wanted 5000000 \
+        -gas-wanted 10000000 \
         -broadcast \
         -chainid "$CHAINID" \
         -remote "$REMOTE" \
