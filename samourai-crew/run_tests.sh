@@ -48,7 +48,7 @@ printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
 # --- sign CLA if required by the network ---
 CLA_HASH=$(gnokey query vm/qrender \
     -data "gno.land/r/sys/cla:" \
-    -remote "$REMOTE" 2>/dev/null | grep -o '"[^"]*"' | head -1 | tr -d '"')
+    -remote "$REMOTE" 2>/dev/null | grep -oE '[0-9a-f]{64}' | head -1)
 if [ -n "$CLA_HASH" ]; then
     echo "Signing CLA ($CLA_HASH)..."
     echo "$PASSWORD" | gnokey maketx call \
