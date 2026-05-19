@@ -4,42 +4,34 @@
 #   repeatable — e2e tests safe to re-run on any chain state
 #   (no arg)   — runs both
 #
-# Expected env vars (injected by the Makefile):
-#   REMOTE                 — primary RPC endpoint
-#   CHAINID                — chain ID
-#   FUNDER_MNEMONIC        — test1 mnemonic used to fund the throwaway account
-#   FUND_AMOUNT            — ugnot to send to the throwaway runner account
-#   REMOTES                — comma-separated RPC list for stress tests (optional)
-#   FUND_AMOUNT_PER_WALLET — ugnot per stress wallet (optional)
+# Expected env vars (set in Dockerfile or injected by Makefile):
+#   REMOTE           — primary RPC endpoint
+#   CHAINID          — chain ID
+#   REMOTES          — comma-separated RPC list for stress tests
+#   RUNNER_MNEMONIC  — mnemonic of the main test account
+#   RUNNER_ADDR      — address of the main test account
 
 MODE="${1:-all}"
 
 export REMOTE="${REMOTE:-http://127.0.0.1:26657}"
 export CHAINID="${CHAINID:-test}"
 export GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey}"
-FUNDER_MNEMONIC="${FUNDER_MNEMONIC:-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast}"
-FUNDER_KEY="funder"
-FUNDER_PASSWORD="test1234"
-FUNDER_ADDR="g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5"
+export REMOTES="${REMOTES:-$REMOTE}"
 export KEY="runner"
 export PASSWORD="runner1234"
-export FUNDER_KEY="funder"
-export FUNDER_PASSWORD="test1234"
-FUND_AMOUNT="${FUND_AMOUNT:-50000000ugnot}"
-export REMOTES="${REMOTES:-$REMOTE}"
-export FUND_AMOUNT_PER_WALLET="${FUND_AMOUNT_PER_WALLET:-15000000ugnot}"
+export KEY_ADDR="${RUNNER_ADDR}"
 
-echo "Remote      : $REMOTE"
-echo "Chain       : $CHAINID"
-echo "Mode        : $MODE"
-echo "Fund amount : $FUND_AMOUNT"
+echo "Remote : $REMOTE"
+echo "Chain  : $CHAINID"
+echo "Mode   : $MODE"
+echo "Runner : $KEY_ADDR"
 echo ""
 
 # --- connectivity check ---
 echo "Checking connectivity..."
 RETRIES=10
 while [ "$RETRIES" -gt 0 ]; do
-    if gnokey query bank/balances/"$FUNDER_ADDR" -remote="$REMOTE" > /dev/null 2>&1; then
+    if gnokey query bank/balances/"$KEY_ADDR" -remote="$REMOTE" > /dev/null 2>&1; then
         echo "Connected."
         break
     fi
@@ -48,60 +40,28 @@ while [ "$RETRIES" -gt 0 ]; do
     sleep 3
 done
 
-# --- import funder (test1) ---
-printf "%s\n%s\n%s\n" "$FUNDER_MNEMONIC" "$FUNDER_PASSWORD" "$FUNDER_PASSWORD" | \
-    gnokey add "$FUNDER_KEY" -recover -insecure-password-stdin=true \
-    -home "$GNOKEY_HOME" > /dev/null 2>&1
-
-# --- generate throwaway test account ---
-echo "Generating throwaway test account..."
-RUNNER_MNEMONIC=$(gnokey generate)
+# --- import runner key ---
 printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     gnokey add "$KEY" -recover -insecure-password-stdin=true \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
 
-export KEY_ADDR
-KEY_ADDR=$(gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep "^[0-9]*\. $KEY " | grep -o 'g1[a-z0-9]*')
-echo "Runner      : $KEY_ADDR"
-
-# --- fund runner from test1 ---
-echo "Funding runner (${FUND_AMOUNT})..."
-echo "$FUNDER_PASSWORD" | gnokey maketx send \
-    -to "$KEY_ADDR" \
-    -send "$FUND_AMOUNT" \
-    -gas-fee 1000000ugnot \
-    -gas-wanted 2000000 \
-    -broadcast \
-    -chainid "$CHAINID" \
-    -remote "$REMOTE" \
-    -insecure-password-stdin=true \
-    -home "$GNOKEY_HOME" \
-    "$FUNDER_KEY" > /dev/null || { echo "ERROR: could not fund runner"; exit 1; }
-echo "Runner funded."
-
-# --- sign CLA (required on networks with restricted transfers) ---
-echo "Checking CLA requirement..."
-CLA_HASH=$(gnokey query vm/qrender \
-    -data "gno.land/r/sys/cla:" \
-    -remote "$REMOTE" 2>/dev/null | grep -o '"[^"]*"' | head -1 | tr -d '"')
-
-if [ -n "$CLA_HASH" ]; then
-    echo "Signing CLA ($CLA_HASH)..."
-    echo "$PASSWORD" | gnokey maketx call \
-        -pkgpath "gno.land/r/sys/cla" \
-        -func "Sign" \
-        -args "$CLA_HASH" \
-        -gas-fee 1000000ugnot \
-        -gas-wanted 1000000000 \
-        -broadcast \
-        -chainid "$CHAINID" \
-        -remote "$REMOTE" \
-        -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" \
-        "$KEY" > /dev/null 2>&1 && echo "CLA signed." || echo "CLA already signed or not required."
-else
-    echo "No CLA found on this network, skipping."
+# --- import stress wallet keys ---
+if [ -n "$STRESS_MNEMONIC_1" ] && [ "$STRESS_MNEMONIC_1" != "TODO_REPLACE_STRESS_MNEMONIC_1" ]; then
+    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_1" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "stress_1" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" > /dev/null 2>&1
 fi
+if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
+    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "stress_2" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" > /dev/null 2>&1
+fi
+if [ -n "$STRESS_MNEMONIC_3" ] && [ "$STRESS_MNEMONIC_3" != "TODO_REPLACE_STRESS_MNEMONIC_3" ]; then
+    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_3" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "stress_3" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" > /dev/null 2>&1
+fi
+
 echo ""
 
 # --- test runner ---

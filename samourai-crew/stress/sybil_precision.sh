@@ -1,18 +1,11 @@
 #!/bin/bash
 # Sybil precision: N wallets hit N RPCs in parallel, but each wallet
-# sends txs sequentially (one confirmed before next) with a small delay.
-# Verifies cross-node consistency under controlled load.
-#
-# Expected env (set by run_tests.sh):
-#   KEY, PASSWORD, CHAINID, GNOKEY_HOME, KEY_ADDR
-#   REMOTES              — comma-separated RPC list (falls back to $REMOTE)
-#   FUND_AMOUNT_PER_WALLET — ugnot to send to each stress wallet
+# sends txs sequentially with a small delay.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 TX_DELAY="${TX_DELAY:-0.8}"
 REMOTES="${REMOTES:-${REMOTE:-http://127.0.0.1:26657}}"
-FUND_AMOUNT_PER_WALLET="${FUND_AMOUNT_PER_WALLET:-15000000ugnot}"
 COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/precision"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
@@ -25,7 +18,16 @@ echo "   RPCs    : $N"
 echo "   Txs/key : $TX_PER_ACCOUNT (delay: ${TX_DELAY}s)"
 echo ""
 
-# Deploy counter realm
+WALLET_KEYS=()
+for i in $(seq 1 "$N"); do
+    wkey="stress_${i}"
+    if gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "^[0-9]*\. $wkey "; then
+        WALLET_KEYS+=("$wkey")
+    else
+        echo "FAIL: stress key $wkey not found in keystore"; exit 1
+    fi
+done
+
 echo "Deploying counter realm..."
 cp "$SCRIPT_DIR/../realms/counter/counter.gno" "$TMPDIR/counter.gno"
 printf 'module = "%s"\ngno = "0.9"\n' "$COUNTER_PKGPATH" > "$TMPDIR/gnomod.toml"
@@ -42,26 +44,6 @@ package main
 import c "$COUNTER_PKGPATH"
 func main() { c.Increment() }
 EOF
-
-# Generate N wallets and fund them
-WALLET_KEYS=()
-for i in $(seq 1 "$N"); do
-    wkey="precision_wallet_${i}"
-    WALLET_KEYS+=("$wkey")
-    mnemonic=$(gnokey generate)
-    printf "%s\n%s\n%s\n" "$mnemonic" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "$wkey" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
-    waddr=$(gnokey list -home "$GNOKEY_HOME" 2>/dev/null | \
-        grep "^[0-9]*\. $wkey " | grep -o 'g1[a-z0-9]*')
-    echo "$PASSWORD" | gnokey maketx send \
-        -to "$waddr" -send "$FUND_AMOUNT_PER_WALLET" \
-        -gas-fee 1000000ugnot -gas-wanted 2000000 \
-        -broadcast -chainid "$CHAINID" -remote "${RPCS[0]}" \
-        -insecure-password-stdin=true -home "$GNOKEY_HOME" \
-        "$KEY" > /dev/null || { echo "FAIL: could not fund $wkey"; exit 1; }
-    echo "   wallet $i funded → $waddr"
-done
 
 echo ""
 echo "Launching precision bombardment..."
