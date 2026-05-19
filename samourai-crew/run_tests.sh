@@ -45,6 +45,27 @@ printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
     gnokey add "$KEY" -recover -insecure-password-stdin=true \
     -home "$GNOKEY_HOME" > /dev/null 2>&1
 
+# --- sign CLA if required by the network ---
+CLA_HASH=$(gnokey query vm/qrender \
+    -data "gno.land/r/sys/cla:" \
+    -remote "$REMOTE" 2>/dev/null | grep -o '"[^"]*"' | head -1 | tr -d '"')
+if [ -n "$CLA_HASH" ]; then
+    echo "Signing CLA ($CLA_HASH)..."
+    echo "$PASSWORD" | gnokey maketx call \
+        -pkgpath "gno.land/r/sys/cla" \
+        -func "Sign" \
+        -args "$CLA_HASH" \
+        -gas-fee 100000ugnot \
+        -gas-wanted 2000000 \
+        -broadcast \
+        -chainid "$CHAINID" \
+        -remote "$REMOTE" \
+        -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" \
+        "$KEY" > /dev/null 2>&1 && echo "CLA signed." || echo "CLA already signed."
+fi
+echo ""
+
 # --- import stress wallet keys (stress_1 = runner, already imported above) ---
 if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
     printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \

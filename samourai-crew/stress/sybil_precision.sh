@@ -38,7 +38,7 @@ printf 'module = "%s"\ngno = "0.9"\n' "$COUNTER_PKGPATH" > "$TMPDIR/gnomod.toml"
 echo "$PASSWORD" | gnokey maketx addpkg \
     -pkgpath "$COUNTER_PKGPATH" \
     -pkgdir "$TMPDIR" \
-    -gas-fee 1000000ugnot -gas-wanted 3000000 \
+    -gas-fee 1000000ugnot -gas-wanted 10000000 \
     -broadcast -chainid "$CHAINID" -remote "${RPCS[0]}" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
