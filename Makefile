@@ -1,4 +1,4 @@
-.PHONY: tests-one-shot tests-repeatable
+.PHONY: tests-one-shot tests-repeatable help
 
 comma  := ,
 REMOTES         ?=
@@ -11,6 +11,7 @@ export FUNDER_MNEMONIC
 # Contributor subdirectories are detected automatically.
 CONTRIB_DIRS := $(filter-out _%, $(patsubst %/Makefile,%,$(wildcard */Makefile)))
 
+## tests-one-shot   : run one-shot tests for all contributors (REMOTES, CHAINID)
 tests-one-shot:
 	@for dir in $(CONTRIB_DIRS); do \
 		echo ""; \
@@ -19,6 +20,7 @@ tests-one-shot:
 			REMOTE=$(REMOTE) REMOTES=$(REMOTES) CHAINID=$(CHAINID) || exit 1; \
 	done
 
+## tests-repeatable : run repeatable tests for all contributors (REMOTES, CHAINID)
 tests-repeatable:
 	@for dir in $(CONTRIB_DIRS); do \
 		echo ""; \
@@ -26,3 +28,7 @@ tests-repeatable:
 		$(MAKE) -C $$dir tests-repeatable --no-print-directory \
 			REMOTE=$(REMOTE) CHAINID=$(CHAINID) || exit 1; \
 	done
+
+## help             : show available targets
+help:
+	@grep -E '^## ' Makefile | sed 's/## /  /'
