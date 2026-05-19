@@ -11,6 +11,8 @@ This repository lets contributors package their own tests and run them against a
 ```text
 community-scripts/
 ├── Makefile                   # root orchestrator
+├── funders/
+│   └── test-13.sh             # funds test accounts from test1 before each run
 ├── _template/
 │   └── Makefile               # copy-paste template for new contributors
 └── <contributor>/
@@ -22,17 +24,18 @@ community-scripts/
 
 Every contributor subdirectory must expose these four rules:
 
-| Rule                      | Description                                              |
-| ------------------------- | -------------------------------------------------------- |
-| `list-funding-one-shot`   | Prints the amount of ugnot needed for one-shot tests     |
-| `list-funding-repeatable` | Prints the amount of ugnot needed for repeatable tests   |
-| `tests-one-shot`          | Runs tests that deploy on-chain state (realm deploys...) |
-| `tests-repeatable`        | Runs tests that can be re-executed safely                |
+| Rule                      | Description                                                         |
+| ------------------------- | ------------------------------------------------------------------- |
+| `list-funding-one-shot`   | Prints `address amount` pairs to fund before one-shot tests         |
+| `list-funding-repeatable` | Prints `address amount` pairs to fund before repeatable tests       |
+| `tests-one-shot`          | Runs tests that deploy on-chain state (realm deploys...)            |
+| `tests-repeatable`        | Runs tests that can be re-executed safely                           |
 
 All rules accept `REMOTES` (comma-separated RPC list) and `CHAINID` variables.
 `REMOTE` is automatically derived from the first entry in `REMOTES`.
 
-Before each run, a fresh throwaway wallet is automatically generated and funded by the `test1` faucet account. No pre-existing wallet or secret is required.
+Before each run, the root Makefile calls `list-funding-*`, passes the returned
+addresses to the funder script (test1), then runs the tests.
 
 Run `make help` from any directory to list available targets.
 
@@ -59,6 +62,12 @@ make tests-one-shot \
   CHAINID=test-13
 ```
 
+With a custom funder script:
+
+```sh
+make tests-one-shot FUNDER=./funders/test-13.sh REMOTES=... CHAINID=test-13
+```
+
 Directly from a contributor subdirectory:
 
 ```sh
@@ -75,46 +84,58 @@ make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
 cp -r _template my-name
 ```
 
-### 2. Edit the Makefile
+### 2. Generate a testnet keypair
 
-Open `my-name/Makefile` and adjust the funding amounts to match your tests' gas needs:
+Generate a dedicated testnet account for your tests (no real value):
 
-```makefile
-FUND_AMOUNT_ONE_SHOT   := 30000000ugnot   # ~30 transactions at 1M ugnot each
-FUND_AMOUNT_REPEATABLE := 10000000ugnot
+```sh
+gnokey generate   # save the mnemonic
+gnokey add my-test-account -recover
 ```
 
-**Multiple wallets:** if your tests require several accounts, declare the total
-budget in `list-funding-*` and generate the additional wallets inside your
-container, funded from the main runner account.
+### 3. Edit the Makefile
 
-### 3. Write your Dockerfile
+Declare your test account address and funding amounts:
 
-Your `Dockerfile` must produce an image that:
+```makefile
+ADDR_1 := g1your_address_here
 
-- accepts `one-shot` or `repeatable` as a command argument
-- reads the env vars listed below
-- generates a throwaway wallet, funds it, and runs the tests
+FUND_AMOUNT_ONE_SHOT   := 30000000ugnot   # ~30 transactions at 1M ugnot each
+FUND_AMOUNT_REPEATABLE := 10000000ugnot
+
+list-funding-one-shot:
+    @echo "$(ADDR_1) $(FUND_AMOUNT_ONE_SHOT)"
+
+list-funding-repeatable:
+    @echo "$(ADDR_1) $(FUND_AMOUNT_REPEATABLE)"
+```
+
+**Multiple wallets:** declare all addresses in `list-funding-*` as space-separated
+`address amount` pairs. The funder will fund each one before the tests run.
+
+### 4. Write your Dockerfile
+
+Your `Dockerfile` must:
+
+- Accept `one-shot` or `repeatable` as a command argument
+- Contain your test account mnemonic (testnet key, no real value)
+- Read `REMOTE`, `REMOTES`, and `CHAINID` from env
+- Sign the network CLA if required (see `samourai-crew/run_tests.sh` for an example)
 
 The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew/` for a shell-based example.
 
-### 4. What your container receives at runtime
+### 5. What your container receives at runtime
 
-| Variable                | Description                                          |
-| ----------------------- | ---------------------------------------------------- |
-| `REMOTE`                | Primary RPC endpoint (first entry of `REMOTES`)      |
-| `REMOTES`               | Comma-separated list of RPC endpoints                |
-| `CHAINID`               | Chain ID                                             |
-| `FUNDER_MNEMONIC`       | test1 mnemonic — used to fund the throwaway wallet   |
-| `FUND_AMOUNT`           | Amount to fund (from your `list-funding-*`)          |
-| `FUND_AMOUNT_PER_WALLET`| Amount per additional wallet (for multi-wallet tests)|
+| Variable  | Description                                         |
+| --------- | --------------------------------------------------- |
+| `REMOTE`  | Primary RPC endpoint (first entry of `REMOTES`)     |
+| `REMOTES` | Comma-separated list of RPC endpoints               |
+| `CHAINID` | Chain ID                                            |
 
-### 5. No secrets needed
-
-A fresh throwaway wallet is generated inside the container at each run, funded by `test1` (a public faucet account on every gnoland testnet), and discarded after the run.
+The funding has already been done by the time your container starts.
 
 ## Current contributors
 
-| Directory       | Description                                                              |
-| --------------- | ------------------------------------------------------------------------ |
-| `samourai-crew` | GnoVM audit scripts, E2E transaction tests, and sybil stress tests       |
+| Directory       | Description                                                        |
+| --------------- | ------------------------------------------------------------------ |
+| `samourai-crew` | GnoVM audit scripts, E2E transaction tests, and sybil stress tests |
