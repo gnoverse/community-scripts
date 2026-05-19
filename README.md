@@ -72,6 +72,10 @@ FUND_AMOUNT_ONE_SHOT   := 30000000ugnot   # ~30 transactions at 1M ugnot each
 FUND_AMOUNT_REPEATABLE := 10000000ugnot
 ```
 
+**Multiple wallets:** if your tests require several accounts, declare the total
+budget in `list-funding-*` and generate the additional wallets inside your
+container, funded from the main runner account.
+
 ### 3. Write your Dockerfile
 
 Your `Dockerfile` must produce an image that:
