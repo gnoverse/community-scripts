@@ -28,6 +28,7 @@ echo ""
 # Deploy counter realm
 echo "Deploying counter realm..."
 cp "$SCRIPT_DIR/../realms/counter/counter.gno" "$TMPDIR/counter.gno"
+printf 'module = "%s"\n' "$COUNTER_PKGPATH" > "$TMPDIR/gnomod.toml"
 echo "$PASSWORD" | gnokey maketx addpkg \
     -pkgpath "$COUNTER_PKGPATH" \
     -pkgdir "$TMPDIR" \
