@@ -1,6 +1,8 @@
 .PHONY: tests-one-shot tests-repeatable
 
-REMOTE          ?= https://rpc.test-13-aeddi-1.gnoland.network
+comma  := ,
+REMOTES         ?=
+REMOTE          ?= $(if $(REMOTES),$(firstword $(subst $(comma), ,$(REMOTES))),https://rpc.test-13-aeddi-1.gnoland.network)
 CHAINID         ?= test-13
 FUNDER_MNEMONIC ?= source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
 
@@ -14,7 +16,7 @@ tests-one-shot:
 		echo ""; \
 		echo "==> $$dir — tests (one-shot)"; \
 		$(MAKE) -C $$dir tests-one-shot --no-print-directory \
-			REMOTE=$(REMOTE) CHAINID=$(CHAINID) || exit 1; \
+			REMOTE=$(REMOTE) REMOTES=$(REMOTES) CHAINID=$(CHAINID) || exit 1; \
 	done
 
 tests-repeatable:

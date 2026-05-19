@@ -1,8 +1,9 @@
 .PHONY: list-funding-one-shot list-funding-repeatable tests-one-shot tests-repeatable build
 
-REMOTE                 ?= http://127.0.0.1:26657
+comma  := ,
+REMOTES                ?=
+REMOTE                 ?= $(if $(REMOTES),$(firstword $(subst $(comma), ,$(REMOTES))),http://127.0.0.1:26657)
 CHAINID                ?= test
-REMOTES                ?= $(REMOTE)
 IMAGE                  := $(shell basename $(CURDIR))
 
 FUND_AMOUNT_ONE_SHOT   := 100000000ugnot
