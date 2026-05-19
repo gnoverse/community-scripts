@@ -32,7 +32,7 @@ while [ "$#" -ge 2 ]; do
     AMOUNT="$2"
     shift 2
 
-    # Check current balance — skip if already sufficient
+    # Send only what is missing — top up to the needed amount
     NEEDED=$(echo "$AMOUNT" | grep -o '^[0-9]*')
     CURRENT=$(gnokey query bank/balances/"$ADDR" -remote "$REMOTE" 2>/dev/null \
         | grep -o '[0-9]*ugnot' | grep -o '^[0-9]*')
@@ -41,11 +41,12 @@ while [ "$#" -ge 2 ]; do
         echo "Funding $ADDR ... SKIP (balance ${CURRENT}ugnot >= ${NEEDED}ugnot)"
         continue
     fi
+    TOPUP=$(( NEEDED - CURRENT ))
 
-    echo -n "Funding $ADDR with $AMOUNT ... "
+    echo -n "Funding $ADDR with ${TOPUP}ugnot (top-up to ${NEEDED}ugnot) ... "
     OUT=$(echo "$PASSWORD" | gnokey maketx send \
         -to "$ADDR" \
-        -send "$AMOUNT" \
+        -send "${TOPUP}ugnot" \
         -gas-fee 1000000ugnot \
         -gas-wanted 2000000 \
         -broadcast \
