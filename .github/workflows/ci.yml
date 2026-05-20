@@ -5,10 +5,26 @@ on:
     branches: [main, init-community-scripts]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to test'
+        required: true
+        type: choice
+        options: [test-13, test12]
+      test_type:
+        description: 'Test type'
+        required: true
+        type: choice
+        default: both
+        options: [one-shot, repeatable, both]
 
-# Optional repository variable:
-#   vars.FUNDER_MNEMONIC — mnemonic of the test1 faucet account.
-#   Defaults to the public test1 mnemonic if not set.
+# Optional repository variables (Settings → Secrets and variables → Actions → Variables):
+#   vars.REMOTES_TEST13    — comma-separated RPC list for test-13
+#   vars.CHAINID_TEST13    — chain ID for test-13 (default: test-13)
+#   vars.REMOTES_TEST12    — comma-separated RPC list for test12
+#   vars.CHAINID_TEST12    — chain ID for test12 (default: test12)
+#   vars.FUNDER_MNEMONIC   — test1 mnemonic (defaults to public mnemonic if not set)
 #
 # The funder script runs inside a gnokey Docker container — no local
 # gnokey installation required on the runner.
@@ -17,13 +33,20 @@ jobs:
   tests-one-shot:
     name: One-shot — ${{ matrix.network.name }}
     runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_dispatch' ||
+      inputs.network == matrix.network.name &&
+      (inputs.test_type == 'one-shot' || inputs.test_type == 'both')
     strategy:
       fail-fast: false
       matrix:
         network:
           - name: test-13
-            remotes: https://rpc.test-13-aeddi-1.gnoland.network,https://rpc.test-13-gfanton-1.gnoland.network,https://rpc.test-13-moul-1.gnoland.network
-            chainid: test-13
+            remotes: ${{ vars.REMOTES_TEST13 || 'https://rpc.test-13-aeddi-1.gnoland.network,https://rpc.test-13-gfanton-1.gnoland.network,https://rpc.test-13-moul-1.gnoland.network' }}
+            chainid: ${{ vars.CHAINID_TEST13 || 'test-13' }}
+          - name: test12
+            remotes: ${{ vars.REMOTES_TEST12 || 'https://rpc.test12.testnets.gno.land' }}
+            chainid: ${{ vars.CHAINID_TEST12 || 'test12' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -33,19 +56,26 @@ jobs:
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-one-shot \
-            REMOTES=${{ matrix.network.remotes }} \
+            REMOTES="${{ matrix.network.remotes }}" \
             CHAINID=${{ matrix.network.chainid }}
 
   tests-repeatable:
     name: Repeatable — ${{ matrix.network.name }}
     runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_dispatch' ||
+      inputs.network == matrix.network.name &&
+      (inputs.test_type == 'repeatable' || inputs.test_type == 'both')
     strategy:
       fail-fast: false
       matrix:
         network:
           - name: test-13
-            remotes: https://rpc.test-13-aeddi-1.gnoland.network
-            chainid: test-13
+            remotes: ${{ vars.REMOTES_TEST13 || 'https://rpc.test-13-aeddi-1.gnoland.network' }}
+            chainid: ${{ vars.CHAINID_TEST13 || 'test-13' }}
+          - name: test12
+            remotes: ${{ vars.REMOTES_TEST12 || 'https://rpc.test12.testnets.gno.land' }}
+            chainid: ${{ vars.CHAINID_TEST12 || 'test12' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -55,5 +85,5 @@ jobs:
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-repeatable \
-            REMOTES=${{ matrix.network.remotes }} \
+            REMOTES="${{ matrix.network.remotes }}" \
             CHAINID=${{ matrix.network.chainid }}
