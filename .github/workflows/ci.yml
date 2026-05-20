@@ -7,14 +7,16 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      network:
-        description: 'Network to test'
-        required: true
-        type: choice
-        options: [test-13, test12]
+      run_test13:
+        description: 'Run on test-13'
+        type: boolean
+        default: true
+      run_test12:
+        description: 'Run on test12'
+        type: boolean
+        default: true
       test_type:
         description: 'Test type'
-        required: true
         type: choice
         default: both
         options: [one-shot, repeatable, both]
@@ -50,8 +52,10 @@ jobs:
       - name: Run one-shot tests
         if: >
           github.event_name != 'workflow_dispatch' ||
-          (inputs.network == matrix.network.name &&
-          (inputs.test_type == 'one-shot' || inputs.test_type == 'both'))
+          (inputs.test_type == 'one-shot' || inputs.test_type == 'both') && (
+            (matrix.network.name == 'test-13' && inputs.run_test13 == true) ||
+            (matrix.network.name == 'test12'  && inputs.run_test12 == true)
+          )
         env:
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
@@ -79,8 +83,10 @@ jobs:
       - name: Run repeatable tests
         if: >
           github.event_name != 'workflow_dispatch' ||
-          (inputs.network == matrix.network.name &&
-          (inputs.test_type == 'repeatable' || inputs.test_type == 'both'))
+          (inputs.test_type == 'repeatable' || inputs.test_type == 'both') && (
+            (matrix.network.name == 'test-13' && inputs.run_test13 == true) ||
+            (matrix.network.name == 'test12'  && inputs.run_test12 == true)
+          )
         env:
           FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
