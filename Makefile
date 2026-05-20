@@ -4,7 +4,7 @@ comma  := ,
 REMOTES         ?=
 REMOTE          ?= $(if $(REMOTES),$(firstword $(subst $(comma), ,$(REMOTES))),https://rpc.test-13-aeddi-1.gnoland.network)
 CHAINID         ?= test-13
-FUNDER_SCRIPT   ?= ./funders/test-13.sh
+FUNDER_SCRIPT   ?= ./funders/gnoland.sh
 FUNDER_MNEMONIC ?= source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
 GNOKEY_IMAGE    ?= ghcr.io/gnolang/gno/gnokey:master
 

@@ -12,7 +12,7 @@ This repository lets contributors package their own tests and run them against a
 community-scripts/
 ├── Makefile                   # root orchestrator
 ├── funders/
-│   └── test-13.sh             # funds test accounts from test1 before each run
+│   └── gnoland.sh             # funds test accounts from test1 (works on any gnoland network)
 ├── _template/
 │   └── Makefile               # copy-paste template for new contributors
 └── <contributor>/
@@ -65,7 +65,7 @@ make tests-one-shot \
 With a custom funder script:
 
 ```sh
-make tests-one-shot FUNDER_SCRIPT=./funders/test-13.sh REMOTES=... CHAINID=test-13
+make tests-one-shot FUNDER_SCRIPT=./funders/gnoland.sh REMOTES=... CHAINID=test-13
 ```
 
 Directly from a contributor subdirectory:
