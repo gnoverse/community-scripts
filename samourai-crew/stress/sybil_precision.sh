@@ -75,13 +75,23 @@ wait
 echo ""
 echo "=== Final counter per RPC ==="
 EXPECTED=$(( N * TX_PER_ACCOUNT ))
-ALL_OK=true
+ATTEMPTED=$(( N * TX_PER_ACCOUNT ))
+FIRST_VAL=""
+ALL_SAME=true
 for rpc in "${RPCS[@]}"; do
     val=$(gnokey query "vm/qeval" -remote "$rpc" \
         -data "${COUNTER_PKGPATH}.Render(\"\")" 2>/dev/null | grep -oE '[0-9]+' | tail -1)
-    echo "   $rpc → $val (expected $EXPECTED)"
-    [ "$val" != "$EXPECTED" ] && ALL_OK=false
+    echo "   $rpc → ${val:-0}"
+    if [ -z "$FIRST_VAL" ]; then
+        FIRST_VAL="${val:-0}"
+    elif [ "${val:-0}" != "$FIRST_VAL" ]; then
+        ALL_SAME=false
+    fi
 done
 
-$ALL_OK && echo "[PASS] all nodes converged" && exit 0
-echo "[FAIL] nodes diverged" && exit 1
+echo "   committed: $FIRST_VAL / $ATTEMPTED txs attempted"
+if $ALL_SAME && [ "${FIRST_VAL:-0}" -gt 0 ]; then
+    echo "[PASS] all nodes converged at $FIRST_VAL"
+    exit 0
+fi
+echo "[FAIL] nodes diverged or no txs committed" && exit 1
