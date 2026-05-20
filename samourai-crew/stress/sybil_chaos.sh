@@ -50,6 +50,12 @@ echo "$PASSWORD" | gnokey maketx addpkg \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
 
+cat > "$TMPDIR/increment.gno" << EOF
+package main
+import c "$COUNTER_PKGPATH"
+func main() { c.Increment() }
+EOF
+
 echo ""
 echo "Launching parallel bombardment..."
 
@@ -58,23 +64,12 @@ for i in $(seq 1 "$N"); do
     rpc="${RPCS[$i-1]}"
     (
         echo -n "🚀 $wkey → $rpc : "
-        # DEBUG: first tx shows output, rest suppressed
-        echo "$PASSWORD" | gnokey maketx call \
-            -pkgpath "$COUNTER_PKGPATH" \
-            -func "Increment" \
-            -broadcast -chainid "$CHAINID" -remote "$rpc" \
-            -gas-fee 1000000ugnot -gas-wanted 3000000 \
-            -insecure-password-stdin=true -home "$GNOKEY_HOME" \
-            "$wkey" 2>&1 | head -5
-        echo -n "."
-        for _ in $(seq 2 "$TX_PER_ACCOUNT"); do
-            echo "$PASSWORD" | gnokey maketx call \
-                -pkgpath "$COUNTER_PKGPATH" \
-                -func "Increment" \
+        for _ in $(seq 1 "$TX_PER_ACCOUNT"); do
+            echo "$PASSWORD" | gnokey maketx run \
                 -broadcast -chainid "$CHAINID" -remote "$rpc" \
                 -gas-fee 1000000ugnot -gas-wanted 3000000 \
                 -insecure-password-stdin=true -home "$GNOKEY_HOME" \
-                "$wkey" > /dev/null 2>&1
+                "$wkey" "$TMPDIR/increment.gno" > /dev/null 2>&1
             echo -n "."
         done
         echo " ✅"
