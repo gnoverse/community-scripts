@@ -82,7 +82,7 @@ EXPECTED=$(( N * TX_PER_ACCOUNT ))
 ALL_OK=true
 for rpc in "${RPCS[@]}"; do
     val=$(gnokey query "vm/qeval" -remote "$rpc" \
-        -data "${COUNTER_PKGPATH}.Render(\"\")" 2>/dev/null | grep -o '[0-9]*' | head -1)
+        -data "${COUNTER_PKGPATH}.Render(\"\")" 2>/dev/null | grep -oE '[0-9]+' | tail -1)
     echo "   $rpc → $val (expected $EXPECTED)"
     [ "$val" != "$EXPECTED" ] && ALL_OK=false
 done
