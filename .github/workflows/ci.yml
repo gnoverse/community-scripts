@@ -22,12 +22,12 @@ on:
         options: [one-shot, repeatable, both]
 
 # Optional repository variables (Settings → Secrets and variables → Actions → Variables):
-#   vars.REMOTES_TEST13    — comma-separated RPC list for test-13
-#   vars.CHAINID_TEST13    — chain ID for test-13 (default: test-13)
-#   vars.REMOTES_TEST12    — comma-separated RPC list for test12
-#   vars.CHAINID_TEST12    — chain ID for test12 (default: test12)
-#   vars.FUNDER_MNEMONIC   — test1 mnemonic (defaults to public mnemonic if not set)
+#   vars.REMOTES_TEST13  — comma-separated RPC list for test-13
+#   vars.CHAINID_TEST13  — chain ID for test-13 (default: test-13)
+#   vars.REMOTES_TEST12  — comma-separated RPC list for test12
+#   vars.CHAINID_TEST12  — chain ID for test12 (default: test12)
 #
+# The test1 funder mnemonic is public and hardcoded in funders/ — no secret needed.
 # The funder script runs inside a gnokey Docker container — no local
 # gnokey installation required on the runner.
 
@@ -56,8 +56,6 @@ jobs:
             (matrix.network.name == 'test-13' && inputs.run_test13 == true) ||
             (matrix.network.name == 'test12'  && inputs.run_test12 == true)
           )
-        env:
-          FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-one-shot \
             REMOTES="${{ matrix.network.remotes }}" \
@@ -87,8 +85,6 @@ jobs:
             (matrix.network.name == 'test-13' && inputs.run_test13 == true) ||
             (matrix.network.name == 'test12'  && inputs.run_test12 == true)
           )
-        env:
-          FUNDER_MNEMONIC: ${{ vars.FUNDER_MNEMONIC }}
         run: |
           make tests-repeatable \
             REMOTES="${{ matrix.network.remotes }}" \
