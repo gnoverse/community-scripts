@@ -58,7 +58,16 @@ for i in $(seq 1 "$N"); do
     rpc="${RPCS[$i-1]}"
     (
         echo -n "🚀 $wkey → $rpc : "
-        for _ in $(seq 1 "$TX_PER_ACCOUNT"); do
+        # DEBUG: first tx shows output, rest suppressed
+        echo "$PASSWORD" | gnokey maketx call \
+            -pkgpath "$COUNTER_PKGPATH" \
+            -func "Increment" \
+            -broadcast -chainid "$CHAINID" -remote "$rpc" \
+            -gas-fee 1000000ugnot -gas-wanted 3000000 \
+            -insecure-password-stdin=true -home "$GNOKEY_HOME" \
+            "$wkey" 2>&1 | head -5
+        echo -n "."
+        for _ in $(seq 2 "$TX_PER_ACCOUNT"); do
             echo "$PASSWORD" | gnokey maketx call \
                 -pkgpath "$COUNTER_PKGPATH" \
                 -func "Increment" \
