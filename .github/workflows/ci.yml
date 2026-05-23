@@ -1,91 +1,73 @@
 name: Community Tests
 
+# Generic reusable workflow. Called by network-specific workflows (e.g. test-13.yml).
+# Can also be triggered manually with custom parameters.
+
 on:
-  push:
-    branches: [main, init-community-scripts]
-  pull_request:
-    branches: [main]
+  workflow_call:
+    inputs:
+      remote:
+        description: 'RPC endpoint'
+        required: true
+        type: string
+      chain_id:
+        description: 'Chain ID'
+        required: true
+        type: string
+      funder_script:
+        description: 'Path to the funder script'
+        required: true
+        type: string
+      test_type:
+        description: 'Test type: one-shot, repeatable, or both'
+        required: false
+        type: string
+        default: both
+
   workflow_dispatch:
     inputs:
-      run_test13:
-        description: 'Run on test-13'
-        type: boolean
-        default: true
-      run_test12:
-        description: 'Run on test12'
-        type: boolean
-        default: true
+      remote:
+        description: 'RPC endpoint'
+        required: true
+        type: string
+      chain_id:
+        description: 'Chain ID'
+        required: true
+        type: string
+      funder_script:
+        description: 'Path to the funder script'
+        required: false
+        type: string
+        default: ./funders/gnoland.sh
       test_type:
         description: 'Test type'
         type: choice
         default: both
         options: [one-shot, repeatable, both]
 
-# Optional repository variables (Settings → Secrets and variables → Actions → Variables):
-#   vars.REMOTES_TEST13  — comma-separated RPC list for test-13
-#   vars.CHAINID_TEST13  — chain ID for test-13 (default: test-13)
-#   vars.REMOTES_TEST12  — comma-separated RPC list for test12
-#   vars.CHAINID_TEST12  — chain ID for test12 (default: test12)
-#
-# The test1 funder mnemonic is public and hardcoded in funders/ — no secret needed.
-# The funder script runs inside a gnokey Docker container — no local
-# gnokey installation required on the runner.
-
 jobs:
   tests-one-shot:
-    name: One-shot — ${{ matrix.network.name }}
+    name: One-shot
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        network:
-          - name: test-13
-            remotes: ${{ vars.REMOTES_TEST13 || 'https://rpc.test-13-aeddi-1.gnoland.network,https://rpc.test-13-gfanton-1.gnoland.network,https://rpc.test-13-moul-1.gnoland.network' }}
-            chainid: ${{ vars.CHAINID_TEST13 || 'test-13' }}
-          - name: test12
-            remotes: ${{ vars.REMOTES_TEST12 || 'https://rpc.test12.testnets.gno.land' }}
-            chainid: ${{ vars.CHAINID_TEST12 || 'test12' }}
-
+    if: inputs.test_type == 'one-shot' || inputs.test_type == 'both'
     steps:
       - uses: actions/checkout@v4
-
       - name: Run one-shot tests
-        if: >
-          github.event_name != 'workflow_dispatch' ||
-          (inputs.test_type == 'one-shot' || inputs.test_type == 'both') && (
-            (matrix.network.name == 'test-13' && inputs.run_test13 == true) ||
-            (matrix.network.name == 'test12'  && inputs.run_test12 == true)
-          )
         run: |
           make tests-one-shot \
-            REMOTES="${{ matrix.network.remotes }}" \
-            CHAINID=${{ matrix.network.chainid }}
+            REMOTE="${{ inputs.remote }}" \
+            CHAINID="${{ inputs.chain_id }}" \
+            FUNDER_SCRIPT="${{ inputs.funder_script }}"
 
   tests-repeatable:
-    name: Repeatable — ${{ matrix.network.name }}
+    name: Repeatable
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        network:
-          - name: test-13
-            remotes: ${{ vars.REMOTES_TEST13 || 'https://rpc.test-13-aeddi-1.gnoland.network' }}
-            chainid: ${{ vars.CHAINID_TEST13 || 'test-13' }}
-          - name: test12
-            remotes: ${{ vars.REMOTES_TEST12 || 'https://rpc.test12.testnets.gno.land' }}
-            chainid: ${{ vars.CHAINID_TEST12 || 'test12' }}
-
+    if: inputs.test_type == 'repeatable' || inputs.test_type == 'both'
     steps:
       - uses: actions/checkout@v4
-
       - name: Run repeatable tests
-        if: >
-          github.event_name != 'workflow_dispatch' ||
-          (inputs.test_type == 'repeatable' || inputs.test_type == 'both') && (
-            (matrix.network.name == 'test-13' && inputs.run_test13 == true) ||
-            (matrix.network.name == 'test12'  && inputs.run_test12 == true)
-          )
         run: |
           make tests-repeatable \
-            REMOTES="${{ matrix.network.remotes }}" \
-            CHAINID=${{ matrix.network.chainid }}
+            REMOTE="${{ inputs.remote }}" \
+            CHAINID="${{ inputs.chain_id }}" \
+            FUNDER_SCRIPT="${{ inputs.funder_script }}"

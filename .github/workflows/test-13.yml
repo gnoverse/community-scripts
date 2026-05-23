@@ -1,0 +1,30 @@
+name: test-13
+
+# Network-specific workflow for test-13.
+# Calls the generic ci.yml with the right remote, chain_id and funder_script.
+#
+# Optional repository variables:
+#   vars.REMOTE_TEST13   — RPC endpoint (default: rpc.test-13-aeddi-1.gnoland.network)
+#   vars.CHAINID_TEST13  — chain ID (default: test-13)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type'
+        type: choice
+        default: both
+        options: [one-shot, repeatable, both]
+
+jobs:
+  run:
+    uses: ./.github/workflows/ci.yml
+    with:
+      remote: ${{ vars.REMOTE_TEST13 || 'https://rpc.test-13-aeddi-1.gnoland.network' }}
+      chain_id: ${{ vars.CHAINID_TEST13 || 'test-13' }}
+      funder_script: ./funders/gnoland.sh
+      test_type: ${{ inputs.test_type || 'both' }}
