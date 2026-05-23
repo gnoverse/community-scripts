@@ -15,9 +15,10 @@ community-scripts/
 │   └── gnoland.sh             # funds test accounts from test1 (works on any gnoland network)
 ├── _template/
 │   └── Makefile               # copy-paste template for new contributors
-└── <contributor>/
-    ├── Makefile               # exposes the 4 required rules (see below)
-    └── Dockerfile             # self-contained test runner (any language)
+└── tests/
+    └── <contributor>/
+        ├── Makefile           # exposes the 4 required rules (see below)
+        └── Dockerfile         # self-contained test runner (any language)
 ```
 
 ## Makefile interface
@@ -71,7 +72,7 @@ make tests-one-shot FUNDER_SCRIPT=./funders/gnoland.sh REMOTES=... CHAINID=test-
 Directly from a contributor subdirectory:
 
 ```sh
-cd samourai-crew
+cd tests/samourai-crew
 make help
 make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
 ```
@@ -81,7 +82,7 @@ make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
 ### 1. Create your directory
 
 ```sh
-cp -r _template my-name
+cp -r _template tests/my-name
 ```
 
 ### 2. Generate a testnet keypair
@@ -136,6 +137,6 @@ The funding has already been done by the time your container starts.
 
 ## Current contributors
 
-| Directory       | Description                                                        |
-| --------------- | ------------------------------------------------------------------ |
-| `samourai-crew` | GnoVM audit scripts, E2E transaction tests, and sybil stress tests |
+| Directory              | Description                                                        |
+| ---------------------- | ------------------------------------------------------------------ |
+| `tests/samourai-crew`  | GnoVM audit scripts, E2E transaction tests, and sybil stress tests |

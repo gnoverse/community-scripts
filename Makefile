@@ -10,8 +10,8 @@ GNOKEY_IMAGE    ?= ghcr.io/gnolang/gno/gnokey:master
 
 export FUNDER_MNEMONIC
 
-# Contributor subdirectories are detected automatically.
-CONTRIB_DIRS := $(filter-out _%, $(patsubst %/Makefile,%,$(wildcard */Makefile)))
+# Contributor subdirectories are detected automatically under tests/.
+CONTRIB_DIRS := $(patsubst %/Makefile,%,$(wildcard tests/*/Makefile))
 
 # Run the funder script inside a gnokey Docker container.
 # No local gnokey installation required — compatible with GitHub Actions.
