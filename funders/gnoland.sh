@@ -1,11 +1,26 @@
 #!/bin/sh
-# Funds a list of address/amount pairs from the test1 faucet on test-13.
-# Usage: test-13.sh <addr1> <amount1> [<addr2> <amount2> ...]
+# Funds a list of address/amount pairs from the test1 faucet.
+# Usage: gnoland.sh <addr1> <amount1> [<addr2> <amount2> ...]
 #
 # Required env:
-#   REMOTE          — RPC endpoint     (default: https://rpc.test-13-aeddi-1.gnoland.network)
-#   CHAINID         — chain ID          (default: test-13)
-#   FUNDER_MNEMONIC — test1 mnemonic    (default: public test1 mnemonic)
+#   REMOTE          — RPC endpoint
+#   CHAINID         — chain ID
+#   FUNDER_MNEMONIC — test1 mnemonic (default: public test1 mnemonic)
+#
+# If gnokey is not available locally, this script re-executes itself
+# inside a gnokey Docker container automatically.
+
+GNOKEY_IMAGE="${GNOKEY_IMAGE:-ghcr.io/gnolang/gno/gnokey:master}"
+if ! command -v gnokey > /dev/null 2>&1; then
+    FUNDERS_DIR="$(cd "$(dirname "$0")" && pwd)"
+    exec docker run --rm \
+        -e REMOTE \
+        -e CHAINID \
+        -e FUNDER_MNEMONIC \
+        -v "${FUNDERS_DIR}:/funders:ro" \
+        "$GNOKEY_IMAGE" \
+        /bin/sh "/funders/$(basename "$0")" "$@"
+fi
 
 REMOTE="${REMOTE:-https://rpc.test-13-aeddi-1.gnoland.network}"
 CHAINID="${CHAINID:-test-13}"
