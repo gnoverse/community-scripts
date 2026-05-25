@@ -3,7 +3,8 @@
 # KEY, PASSWORD, KEY_ADDR and GNOKEY_HOME are exported by run_tests.sh
 # before any script is called. Defaults below are for standalone use only.
 
-RPC="${REMOTE:-${RPC:-http://127.0.0.1:26657}}"
+RPC="${REMOTE:-${REMOTES%%,*}}"
+RPC="${RPC:-http://127.0.0.1:26657}"
 CHAINID="${CHAINID:-test}"
 KEY="${KEY:-runner}"
 PASSWORD="${PASSWORD:-runner1234}"

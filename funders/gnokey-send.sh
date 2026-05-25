@@ -1,11 +1,11 @@
 #!/bin/sh
-# Funds a list of address/amount pairs from the test1 faucet.
-# Usage: gnoland.sh <addr1> <amount1> [<addr2> <amount2> ...]
+# Generic gnokey bank-send script.
+# Funds a list of address/amount pairs, topping up to the requested balance.
 #
-# Required env:
-#   REMOTE          — RPC endpoint
+# Required env (no defaults — exits if any is missing):
+#   REMOTES         — RPC endpoint(s), comma-separated (first one is used)
 #   CHAINID         — chain ID
-#   FUNDER_MNEMONIC — test1 mnemonic (default: public test1 mnemonic)
+#   FUNDER_MNEMONIC — sender mnemonic
 #
 # If gnokey is not available locally, this script re-executes itself
 # inside a gnokey Docker container automatically.
@@ -14,7 +14,7 @@ GNOKEY_IMAGE="${GNOKEY_IMAGE:-ghcr.io/gnolang/gno/gnokey:master}"
 if ! command -v gnokey > /dev/null 2>&1; then
     FUNDERS_DIR="$(cd "$(dirname "$0")" && pwd)"
     exec docker run --rm \
-        -e REMOTE \
+        -e REMOTES \
         -e CHAINID \
         -e FUNDER_MNEMONIC \
         -v "${FUNDERS_DIR}:/funders:ro" \
@@ -22,17 +22,20 @@ if ! command -v gnokey > /dev/null 2>&1; then
         /bin/sh "/funders/$(basename "$0")" "$@"
 fi
 
-REMOTE="${REMOTE:-https://rpc.test-13-aeddi-1.gnoland.network}"
-CHAINID="${CHAINID:-test-13}"
-FUNDER_MNEMONIC="${FUNDER_MNEMONIC:-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast}"
-PASSWORD="test1234"
-GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey-funder}"
-FUNDER_KEY="funder"
+: "${REMOTES:?REMOTES is required}"
+: "${CHAINID:?CHAINID is required}"
+: "${FUNDER_MNEMONIC:?FUNDER_MNEMONIC is required}"
+
+REMOTE="${REMOTES%%,*}"
 
 if [ "$#" -eq 0 ] || [ $(( $# % 2 )) -ne 0 ]; then
     echo "Usage: $0 <addr1> <amount1> [<addr2> <amount2> ...]"
     exit 1
 fi
+
+PASSWORD="test1234"
+GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey-funder}"
+FUNDER_KEY="funder"
 
 mkdir -p "$GNOKEY_HOME"
 if ! gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "$FUNDER_KEY"; then

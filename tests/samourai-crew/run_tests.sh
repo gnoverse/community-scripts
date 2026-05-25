@@ -5,18 +5,17 @@
 #   (no arg)   — runs both
 #
 # Expected env vars (set in Dockerfile or injected by Makefile):
-#   REMOTE           — primary RPC endpoint
+#   REMOTES          — comma-separated RPC list (single entry = one node)
 #   CHAINID          — chain ID
-#   REMOTES          — comma-separated RPC list for stress tests
 #   RUNNER_MNEMONIC  — mnemonic of the main test account
 #   RUNNER_ADDR      — address of the main test account
 
 MODE="${1:-all}"
 
-export REMOTE="${REMOTE:-http://127.0.0.1:26657}"
+export REMOTES="${REMOTES:-http://127.0.0.1:26657}"
+export REMOTE="${REMOTES%%,*}"
 export CHAINID="${CHAINID:-test}"
 export GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey}"
-export REMOTES="${REMOTES:-$REMOTE}"
 export KEY="runner"
 export PASSWORD="runner1234"
 export KEY_ADDR="${RUNNER_ADDR}"

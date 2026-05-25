@@ -12,7 +12,10 @@ This repository lets contributors package their own tests and run them against a
 community-scripts/
 ├── Makefile                   # root orchestrator
 ├── funders/
-│   └── gnoland.sh             # funds test accounts from test1 (works on any gnoland network)
+│   ├── gnokey-send.sh         # generic gnokey bank-send (no defaults)
+│   ├── _template.sh           # copy this to add a new network
+│   ├── test-12.sh             # wrapper for test12
+│   └── test-13.sh             # wrapper for test-13
 ├── _template/
 │   └── Makefile               # copy-paste template for new contributors
 └── tests/
@@ -33,7 +36,6 @@ Every contributor subdirectory must expose these four rules:
 | `tests-repeatable`        | Runs tests that can be re-executed safely                           |
 
 All rules accept `REMOTES` (comma-separated RPC list) and `CHAINID` variables.
-`REMOTE` is automatically derived from the first entry in `REMOTES`.
 
 Before each run, the root Makefile calls `list-funding-*`, passes the returned
 addresses to the funder script (test1), then runs the tests.
@@ -42,11 +44,13 @@ Run `make help` from any directory to list available targets.
 
 ## Running tests
 
-Against test-13 (default):
+Against test-13 with 3 validator nodes:
 
 ```sh
-make tests-one-shot
-make tests-repeatable
+make tests-one-shot \
+  REMOTES=https://rpc.test-13-aeddi-1.gnoland.network,https://rpc.test-13-gfanton-1.gnoland.network,https://rpc.test-13-moul-1.gnoland.network \
+  CHAINID=test-13 \
+  FUNDER_SCRIPT=./funders/test-13.sh
 ```
 
 Against a single custom RPC:
@@ -66,7 +70,7 @@ make tests-one-shot \
 With a custom funder script:
 
 ```sh
-make tests-one-shot FUNDER_SCRIPT=./funders/gnoland.sh REMOTES=... CHAINID=test-13
+make tests-one-shot FUNDER_SCRIPT=./funders/test-13.sh REMOTES=... CHAINID=test-13
 ```
 
 Directly from a contributor subdirectory:
@@ -120,7 +124,7 @@ Your `Dockerfile` must:
 
 - Accept `one-shot` or `repeatable` as a command argument
 - Contain your test account mnemonic (testnet key, no real value)
-- Read `REMOTE`, `REMOTES`, and `CHAINID` from env
+- Read `REMOTES` and `CHAINID` from env
 - Sign the network CLA if required (see `samourai-crew/run_tests.sh` for an example)
 
 The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew/` for a shell-based example.
@@ -129,7 +133,6 @@ The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew
 
 | Variable  | Description                                         |
 | --------- | --------------------------------------------------- |
-| `REMOTE`  | Primary RPC endpoint (first entry of `REMOTES`)     |
 | `REMOTES` | Comma-separated list of RPC endpoints               |
 | `CHAINID` | Chain ID                                            |
 

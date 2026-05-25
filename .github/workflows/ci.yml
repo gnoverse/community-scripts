@@ -6,8 +6,8 @@ name: Community Tests
 on:
   workflow_call:
     inputs:
-      remote:
-        description: 'RPC endpoint'
+      remotes:
+        description: 'RPC endpoint(s), comma-separated'
         required: true
         type: string
       chain_id:
@@ -26,8 +26,8 @@ on:
 
   workflow_dispatch:
     inputs:
-      remote:
-        description: 'RPC endpoint'
+      remotes:
+        description: 'RPC endpoint(s), comma-separated'
         required: true
         type: string
       chain_id:
@@ -38,7 +38,7 @@ on:
         description: 'Path to the funder script'
         required: false
         type: string
-        default: ./funders/gnoland.sh
+        default: ./funders/test-13.sh
       test_type:
         description: 'Test type'
         type: choice
@@ -55,7 +55,7 @@ jobs:
       - name: Run one-shot tests
         run: |
           make tests-one-shot \
-            REMOTE="${{ inputs.remote }}" \
+            REMOTES="${{ inputs.remotes }}" \
             CHAINID="${{ inputs.chain_id }}" \
             FUNDER_SCRIPT="${{ inputs.funder_script }}"
 
@@ -68,6 +68,6 @@ jobs:
       - name: Run repeatable tests
         run: |
           make tests-repeatable \
-            REMOTE="${{ inputs.remote }}" \
+            REMOTES="${{ inputs.remotes }}" \
             CHAINID="${{ inputs.chain_id }}" \
             FUNDER_SCRIPT="${{ inputs.funder_script }}"

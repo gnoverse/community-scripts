@@ -2,9 +2,7 @@
 
 # Override REMOTES and CHAINID to target a live network:
 #   make tests-one-shot REMOTES=https://rpc.test-13-aeddi-1.gnoland.network CHAINID=test-13
-comma  := ,
 REMOTES ?=
-REMOTE  ?= $(if $(REMOTES),$(firstword $(subst $(comma), ,$(REMOTES))),http://127.0.0.1:26657)
 CHAINID ?= test
 IMAGE   := $(shell basename $(CURDIR))
 
@@ -30,7 +28,6 @@ build:
 ## tests-one-shot          : run one-shot tests (REMOTES, CHAINID)
 tests-one-shot: build
 	docker run --rm \
-		-e REMOTE=$(REMOTE) \
 		-e REMOTES=$(REMOTES) \
 		-e CHAINID=$(CHAINID) \
 		$(IMAGE) one-shot
@@ -38,7 +35,7 @@ tests-one-shot: build
 ## tests-repeatable        : run repeatable tests (REMOTES, CHAINID)
 tests-repeatable: build
 	docker run --rm \
-		-e REMOTE=$(REMOTE) \
+		-e REMOTES=$(REMOTES) \
 		-e CHAINID=$(CHAINID) \
 		$(IMAGE) repeatable
 
