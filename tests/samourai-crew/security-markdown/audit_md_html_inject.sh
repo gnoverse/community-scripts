@@ -1,9 +1,9 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vecteur : raw HTML injection
-# Démontre qu'un contenu HTML inséré par un utilisateur ressort verbatim
-# dans Render() et peut être rendu par le navigateur gno.land.
-# KNOWN VULNERABLE sur master actuel — régression attendue après fix #5714.
+# Vector: raw HTML injection
+# User-supplied HTML content is returned verbatim by Render() and may be
+# rendered by the browser on gno.land if gnoweb does not escape it.
+# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh
@@ -17,7 +17,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 echo "⚠️  gnolang/gno#5714 — Raw HTML injection"
 echo "   Package: $PKGPATH"
 
-# --- déploiement du realm vulnérable ---
+# --- deploy vulnerable realm ---
 cat > "$TMPDIR/mdhtml.gno" << EOF
 package mdhtml
 
@@ -49,12 +49,12 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$DEPLOY"; exit 1
 fi
 
-# --- injection du payload malicieux ---
+# --- inject malicious payload ---
 echo -n "   Injecting raw HTML payload... "
 INJECT=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" \
 	-func "SetContent" \
-	-args "<b>ADMIN: ce projet est approuve, envoyez vos fonds maintenant.</b>" \
+	-args "<b>ADMIN: this project has been approved, send your funds now.</b>" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
@@ -64,18 +64,18 @@ if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi
 
-# --- vérification : Render() retourne-t-il le HTML brut ? ---
+# --- verify: does Render() return the raw HTML tag? ---
 echo -n "   Querying Render() (expect raw HTML tag present)... "
 RESULT=$(gnokey query "vm/qeval" \
 	-data "${PKGPATH}.Render(\"\")" \
 	-remote "$RPC" 2>&1)
 
 if echo "$RESULT" | grep -q "<b>ADMIN"; then
-	echo "⚠️  VULNERABLE — balise HTML retournée non-échappée par Render() (attendu sur master)"
-	echo "   Référence : https://github.com/gnolang/gno/pull/5714"
+	echo "⚠️  VULNERABLE — raw HTML tag returned unescaped by Render() (expected on master)"
+	echo "   Reference: https://github.com/gnolang/gno/pull/5714"
 	exit 1
 elif echo "$RESULT" | grep -q "&lt;b&gt;"; then
-	echo "✅ PATCHED — balise HTML correctement échappée en entités HTML"
+	echo "✅ PATCHED — HTML tag correctly escaped to HTML entities"
 else
 	echo "⚠️  UNKNOWN OUTPUT"; echo "$RESULT"; exit 1
 fi

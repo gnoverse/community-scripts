@@ -1,9 +1,9 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vecteur : link URL hijacking
-# Démontre qu'un message utilisateur peut contenir un lien dont le texte
-# ressemble à une URL officielle mais dont la destination est malicieuse.
-# KNOWN VULNERABLE sur master actuel — régression attendue après fix #5714.
+# Vector: link URL hijacking
+# A user-controlled message can contain a link whose display text resembles
+# an official URL while the actual href points to a malicious destination.
+# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh
@@ -17,7 +17,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 echo "⚠️  gnolang/gno#5714 — Link URL hijacking"
 echo "   Package: $PKGPATH"
 
-# --- déploiement du realm vulnérable ---
+# --- deploy vulnerable realm ---
 cat > "$TMPDIR/mdlink.gno" << EOF
 package mdlink
 
@@ -49,8 +49,8 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$DEPLOY"; exit 1
 fi
 
-# --- injection du payload malicieux ---
-# Le texte affiché imite gno.land mais le href pointe vers phishing.example.com
+# --- inject malicious payload ---
+# Display text mimics gno.land but the href points to phishing.example.com.
 echo -n "   Injecting hijacked link... "
 INJECT=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" \
@@ -65,18 +65,18 @@ if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi
 
-# --- vérification : Render() expose-t-il l'URL de phishing ? ---
+# --- verify: does Render() expose the phishing URL? ---
 echo -n "   Querying Render() (expect phishing URL present)... "
 RESULT=$(gnokey query "vm/qeval" \
 	-data "${PKGPATH}.Render(\"\")" \
 	-remote "$RPC" 2>&1)
 
 if echo "$RESULT" | grep -q "phishing.example.com"; then
-	echo "⚠️  VULNERABLE — URL de phishing présente dans Render() (attendu sur master)"
-	echo "   Référence : https://github.com/gnolang/gno/pull/5714"
+	echo "⚠️  VULNERABLE — phishing URL present in Render() (expected on master)"
+	echo "   Reference: https://github.com/gnolang/gno/pull/5714"
 	exit 1
 elif echo "$RESULT" | grep -q "gno.land/r/official"; then
-	echo "✅ PATCHED — URL malicieuse neutralisée"
+	echo "✅ PATCHED — malicious URL neutralized"
 else
 	echo "⚠️  UNKNOWN OUTPUT"; echo "$RESULT"; exit 1
 fi

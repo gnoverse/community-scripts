@@ -1,9 +1,9 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vecteur : blockquote context confusion
-# Démontre qu'un commentaire utilisateur peut injecter une blockquote
-# qui ressemble visuellement à une déclaration officielle du core team.
-# KNOWN VULNERABLE sur master actuel — régression attendue après fix #5714.
+# Vector: blockquote context confusion
+# A user-controlled comment can inject a blockquote that visually mimics
+# an official statement from the core team.
+# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh
@@ -17,7 +17,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 echo "⚠️  gnolang/gno#5714 — Blockquote context confusion"
 echo "   Package: $PKGPATH"
 
-# --- déploiement du realm vulnérable ---
+# --- deploy vulnerable realm ---
 cat > "$TMPDIR/mdbq.gno" << EOF
 package mdbq
 
@@ -28,7 +28,7 @@ func AddComment(cur realm, c string) {
 }
 
 func Render(_ string) string {
-	out := "## Commentaires\n\n"
+	out := "## Comments\n\n"
 	for _, c := range comments {
 		out += c + "\n\n"
 	}
@@ -53,13 +53,13 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$DEPLOY"; exit 1
 fi
 
-# --- injection du payload malicieux ---
-# Le commentaire utilise la syntaxe blockquote pour imiter un message officiel
+# --- inject malicious payload ---
+# The comment uses blockquote syntax to impersonate an official core-team message.
 echo -n "   Injecting fake official blockquote... "
 INJECT=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" \
 	-func "AddComment" \
-	-args "> **@core-team :** Cette proposition est officiellement approuvee. Votez OUI immediatement." \
+	-args "> **@core-team :** This proposal is officially approved. Vote YES immediately." \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
@@ -69,18 +69,18 @@ if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi
 
-# --- vérification : Render() expose-t-il la fausse déclaration officielle ? ---
+# --- verify: does Render() expose the fake official statement? ---
 echo -n "   Querying Render() (expect injected blockquote present)... "
 RESULT=$(gnokey query "vm/qeval" \
 	-data "${PKGPATH}.Render(\"\")" \
 	-remote "$RPC" 2>&1)
 
 if echo "$RESULT" | grep -q "core-team"; then
-	echo "⚠️  VULNERABLE — blockquote injectée présente dans Render() (attendu sur master)"
-	echo "   Référence : https://github.com/gnolang/gno/pull/5714"
+	echo "⚠️  VULNERABLE — injected blockquote present in Render() (expected on master)"
+	echo "   Reference: https://github.com/gnolang/gno/pull/5714"
 	exit 1
-elif echo "$RESULT" | grep -q "Commentaires"; then
-	echo "✅ PATCHED — contenu de commentaire échappé, blockquote neutralisée"
+elif echo "$RESULT" | grep -q "Comments"; then
+	echo "✅ PATCHED — comment content escaped, blockquote neutralized"
 else
 	echo "⚠️  UNKNOWN OUTPUT"; echo "$RESULT"; exit 1
 fi
