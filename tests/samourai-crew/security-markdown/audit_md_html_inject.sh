@@ -23,7 +23,7 @@ package mdhtml
 
 var content string
 
-func SetContent(c string) {
+func SetContent(cur realm, c string) {
 	content = c
 }
 

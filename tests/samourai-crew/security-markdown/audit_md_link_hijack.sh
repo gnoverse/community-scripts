@@ -23,7 +23,7 @@ package mdlink
 
 var message string
 
-func SetMessage(m string) {
+func SetMessage(cur realm, m string) {
 	message = m
 }
 

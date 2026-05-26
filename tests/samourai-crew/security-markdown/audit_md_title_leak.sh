@@ -24,7 +24,7 @@ package mdtitle
 var title string
 var body = "Ceci est le corps officiel de la proposition."
 
-func SetTitle(t string) {
+func SetTitle(cur realm, t string) {
 	title = t
 }
 

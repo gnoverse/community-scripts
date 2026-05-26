@@ -23,7 +23,7 @@ package mdbq
 
 var comments []string
 
-func AddComment(c string) {
+func AddComment(cur realm, c string) {
 	comments = append(comments, c)
 }
 
