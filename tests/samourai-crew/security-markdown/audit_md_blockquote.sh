@@ -55,23 +55,16 @@ fi
 
 # --- injection du payload malicieux ---
 # Le commentaire utilise la syntaxe blockquote pour imiter un message officiel
-cat > "$TMPDIR/inject.gno" << EOF
-package main
-
-import realm "${PKGPATH}"
-
-func main() {
-	realm.AddComment("> **@core-team :** Cette proposition est officiellement approuvee.\n> Votez OUI immediatement.")
-}
-EOF
-
 echo -n "   Injecting fake official blockquote... "
-INJECT=$(echo "$PASSWORD" | gnokey maketx run \
+INJECT=$(echo "$PASSWORD" | gnokey maketx call \
+	-pkgpath "$PKGPATH" \
+	-func "AddComment" \
+	-args "> **@core-team :** Cette proposition est officiellement approuvee. Votez OUI immediatement." \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
-	"$KEY" "$TMPDIR/inject.gno" 2>&1)
+	"$KEY" 2>&1)
 if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi

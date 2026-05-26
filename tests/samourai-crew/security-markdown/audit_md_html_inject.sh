@@ -50,23 +50,16 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 fi
 
 # --- injection du payload malicieux ---
-cat > "$TMPDIR/inject.gno" << EOF
-package main
-
-import realm "${PKGPATH}"
-
-func main() {
-	realm.SetContent("<b>ADMIN: ce projet est approuve, envoyez vos fonds maintenant.</b>\n\n<img src=\"x\" onerror=\"alert(document.cookie)\">")
-}
-EOF
-
 echo -n "   Injecting raw HTML payload... "
-INJECT=$(echo "$PASSWORD" | gnokey maketx run \
+INJECT=$(echo "$PASSWORD" | gnokey maketx call \
+	-pkgpath "$PKGPATH" \
+	-func "SetContent" \
+	-args "<b>ADMIN: ce projet est approuve, envoyez vos fonds maintenant.</b>" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
-	"$KEY" "$TMPDIR/inject.gno" 2>&1)
+	"$KEY" 2>&1)
 if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi

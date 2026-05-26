@@ -51,23 +51,16 @@ fi
 
 # --- injection du payload malicieux ---
 # Le texte affiché imite gno.land mais le href pointe vers phishing.example.com
-cat > "$TMPDIR/inject.gno" << EOF
-package main
-
-import realm "${PKGPATH}"
-
-func main() {
-	realm.SetMessage("[https://gno.land/r/official/dao](http://phishing.example.com/steal?target=gnoland)")
-}
-EOF
-
 echo -n "   Injecting hijacked link... "
-INJECT=$(echo "$PASSWORD" | gnokey maketx run \
+INJECT=$(echo "$PASSWORD" | gnokey maketx call \
+	-pkgpath "$PKGPATH" \
+	-func "SetMessage" \
+	-args "[https://gno.land/r/official/dao](http://phishing.example.com/steal?target=gnoland)" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
-	"$KEY" "$TMPDIR/inject.gno" 2>&1)
+	"$KEY" 2>&1)
 if echo "$INJECT" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$INJECT"; exit 1
 fi
