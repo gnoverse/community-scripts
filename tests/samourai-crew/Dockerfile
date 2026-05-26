@@ -4,14 +4,15 @@ RUN apk add --no-cache bash jq
 
 WORKDIR /tests
 
-COPY audit/   audit/
-COPY e2e/     e2e/
-COPY stress/  stress/
-COPY realms/  realms/
+COPY audit/              audit/
+COPY e2e/                e2e/
+COPY stress/             stress/
+COPY realms/             realms/
+COPY security-markdown/  security-markdown/
 COPY run_tests.sh .
 
 RUN chmod +x run_tests.sh \
-    && find audit e2e stress -name "*.sh" -exec chmod +x {} +
+    && find audit e2e stress security-markdown -name "*.sh" -exec chmod +x {} +
 
 ENV REMOTES=http://127.0.0.1:26657
 ENV CHAINID=test
