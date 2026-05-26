@@ -134,14 +134,16 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
 
     echo ""
     echo "=== Security Markdown Audit (KNOWN VULNERABLE — gnolang/gno#5714) ==="
-    run_test "audit_md_title_leak"  /tests/security-markdown/audit_md_title_leak.sh \
-        "Render() retourne titre non-échappé, voir gnolang/gno#5714"
-    run_test "audit_md_html_inject" /tests/security-markdown/audit_md_html_inject.sh \
-        "Render() retourne HTML brut, voir gnolang/gno#5714"
-    run_test "audit_md_link_hijack" /tests/security-markdown/audit_md_link_hijack.sh \
-        "Render() retourne lien hijacké, voir gnolang/gno#5714"
-    run_test "audit_md_blockquote"  /tests/security-markdown/audit_md_blockquote.sh \
-        "Render() retourne blockquote injectée, voir gnolang/gno#5714"
+    run_test "audit_md_title_leak"     /tests/security-markdown/audit_md_title_leak.sh \
+        "Render() returns unsanitized title, see gnolang/gno#5714"
+    run_test "audit_md_html_inject"    /tests/security-markdown/audit_md_html_inject.sh \
+        "Render() returns raw HTML tag, see gnolang/gno#5714"
+    run_test "audit_md_link_hijack"    /tests/security-markdown/audit_md_link_hijack.sh \
+        "Render() returns hijacked link URL, see gnolang/gno#5714"
+    run_test "audit_md_blockquote"     /tests/security-markdown/audit_md_blockquote.sh \
+        "Render() returns injected blockquote, see gnolang/gno#5714"
+    run_test "audit_md_image_tracking" /tests/security-markdown/audit_md_image_tracking.sh \
+        "Render() returns external image URL, see gnolang/gno#5714"
 
     echo ""
     echo "=== Stress Tests ==="

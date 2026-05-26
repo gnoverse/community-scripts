@@ -17,7 +17,7 @@ MNEMONIC_3 := galaxy fire athlete egg three crane stone borrow thought cover sto
 
 ## list-funding-one-shot   : print addresses and amounts to fund before one-shot tests
 list-funding-one-shot:
-	@echo "$(ADDR_1) 100000000ugnot $(ADDR_2) 15000000ugnot $(ADDR_3) 15000000ugnot"
+	@echo "$(ADDR_1) 150000000ugnot $(ADDR_2) 15000000ugnot $(ADDR_3) 15000000ugnot"
 
 ## list-funding-repeatable : print addresses and amounts to fund before repeatable tests
 list-funding-repeatable:
