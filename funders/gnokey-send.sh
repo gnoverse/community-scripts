@@ -14,12 +14,13 @@ GNOKEY_IMAGE="${GNOKEY_IMAGE:-ghcr.io/gnolang/gno/gnokey:master}"
 if ! command -v gnokey > /dev/null 2>&1; then
     FUNDERS_DIR="$(cd "$(dirname "$0")" && pwd)"
     exec docker run --rm \
+        --entrypoint /bin/sh \
         -e REMOTES \
         -e CHAINID \
         -e FUNDER_MNEMONIC \
         -v "${FUNDERS_DIR}:/funders:ro" \
         "$GNOKEY_IMAGE" \
-        /bin/sh "/funders/$(basename "$0")" "$@"
+        "/funders/$(basename "$0")" "$@"
 fi
 
 : "${REMOTES:?REMOTES is required}"
