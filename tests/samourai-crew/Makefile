@@ -40,10 +40,10 @@ tests-one-shot: build
 		-e STRESS_ADDR_2=$(ADDR_2) \
 		-e STRESS_ADDR_3=$(ADDR_3) \
 		-e RUNNER_ADDR=$(ADDR_1) \
-		-e STRESS_MNEMONIC_1=$(MNEMONIC_1) \
-		-e STRESS_MNEMONIC_2=$(MNEMONIC_2) \
-		-e STRESS_MNEMONIC_3=$(MNEMONIC_3) \
-		-e RUNNER_MNEMONIC=$(MNEMONIC_1) \
+		-e "STRESS_MNEMONIC_1=$(MNEMONIC_1)" \
+		-e "STRESS_MNEMONIC_2=$(MNEMONIC_2)" \
+		-e "STRESS_MNEMONIC_3=$(MNEMONIC_3)" \
+		-e "RUNNER_MNEMONIC=$(MNEMONIC_1)" \
 		$(IMAGE) one-shot
 
 ## tests-repeatable        : run repeatable tests (REMOTES, CHAINID)
@@ -55,10 +55,10 @@ tests-repeatable: build
 		-e STRESS_ADDR_2=$(ADDR_2) \
 		-e STRESS_ADDR_3=$(ADDR_3) \
 		-e RUNNER_ADDR=$(ADDR_1) \
-		-e STRESS_MNEMONIC_1=$(MNEMONIC_1) \
-		-e STRESS_MNEMONIC_2=$(MNEMONIC_2) \
-		-e STRESS_MNEMONIC_3=$(MNEMONIC_3) \
-		-e RUNNER_MNEMONIC=$(MNEMONIC_1) \
+		-e "STRESS_MNEMONIC_1=$(MNEMONIC_1)" \
+		-e "STRESS_MNEMONIC_2=$(MNEMONIC_2)" \
+		-e "STRESS_MNEMONIC_3=$(MNEMONIC_3)" \
+		-e "RUNNER_MNEMONIC=$(MNEMONIC_1)" \
 		$(IMAGE) repeatable
 
 ## help                    : show available targets
