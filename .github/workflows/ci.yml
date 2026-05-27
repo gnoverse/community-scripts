@@ -1,0 +1,73 @@
+name: Community Tests
+
+# Generic reusable workflow. Called by network-specific workflows (e.g. test-13.yml).
+# Can also be triggered manually with custom parameters.
+
+on:
+  workflow_call:
+    inputs:
+      remotes:
+        description: 'RPC endpoint(s), comma-separated'
+        required: true
+        type: string
+      chain_id:
+        description: 'Chain ID'
+        required: true
+        type: string
+      funder_script:
+        description: 'Path to the funder script'
+        required: true
+        type: string
+      test_type:
+        description: 'Test type: one-shot, repeatable, or both'
+        required: false
+        type: string
+        default: both
+
+  workflow_dispatch:
+    inputs:
+      remotes:
+        description: 'RPC endpoint(s), comma-separated'
+        required: true
+        type: string
+      chain_id:
+        description: 'Chain ID'
+        required: true
+        type: string
+      funder_script:
+        description: 'Path to the funder script'
+        required: false
+        type: string
+        default: ./funders/test-13.sh
+      test_type:
+        description: 'Test type'
+        type: choice
+        default: both
+        options: [one-shot, repeatable, both]
+
+jobs:
+  tests-one-shot:
+    name: One-shot
+    runs-on: ubuntu-latest
+    if: inputs.test_type == 'one-shot' || inputs.test_type == 'both'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run one-shot tests
+        run: |
+          make tests-one-shot \
+            REMOTES="${{ inputs.remotes }}" \
+            CHAINID="${{ inputs.chain_id }}" \
+            FUNDER_SCRIPT="${{ inputs.funder_script }}"
+
+  tests-repeatable:
+    name: Repeatable
+    runs-on: ubuntu-latest
+    if: inputs.test_type == 'repeatable' || inputs.test_type == 'both'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run repeatable tests
+        run: |
+          make tests-repeatable \
+            REMOTES="${{ inputs.remotes }}" \
+            CHAINID="${{ inputs.chain_id }}" \
+            FUNDER_SCRIPT="${{ inputs.funder_script }}"

@@ -1,0 +1,97 @@
+#!/bin/bash
+# Sybil precision: N wallets hit N RPCs in parallel, but each wallet
+# sends txs sequentially with a small delay.
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
+TX_DELAY="${TX_DELAY:-0.8}"
+REMOTES="${REMOTES:-${REMOTE:-http://127.0.0.1:26657}}"
+SUFFIX=$(date +%s)
+COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/precision${SUFFIX}"
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+echo "🎯 SYBIL PRECISION — sequential per wallet, parallel across wallets"
+
+IFS=',' read -ra RPCS <<< "$REMOTES"
+N=${#RPCS[@]}
+echo "   RPCs    : $N"
+echo "   Txs/key : $TX_PER_ACCOUNT (delay: ${TX_DELAY}s)"
+echo ""
+
+WALLET_KEYS=()
+for i in $(seq 1 "$N"); do
+    if [ "$i" -eq 1 ]; then
+        WALLET_KEYS+=("$KEY")
+    else
+        wkey="stress_${i}"
+        if gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "^[0-9]*\. $wkey "; then
+            WALLET_KEYS+=("$wkey")
+        else
+            echo "FAIL: stress key $wkey not found in keystore"; exit 1
+        fi
+    fi
+done
+
+echo "Deploying counter realm..."
+cp "$SCRIPT_DIR/../realms/counter/counter.gno" "$TMPDIR/counter.gno"
+printf 'module = "%s"\ngno = "0.9"\n' "$COUNTER_PKGPATH" > "$TMPDIR/gnomod.toml"
+echo "$PASSWORD" | gnokey maketx addpkg \
+    -pkgpath "$COUNTER_PKGPATH" \
+    -pkgdir "$TMPDIR" \
+    -gas-fee 1000000ugnot -gas-wanted 10000000 \
+    -broadcast -chainid "$CHAINID" -remote "${RPCS[0]}" \
+    -insecure-password-stdin=true -home "$GNOKEY_HOME" \
+    "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
+
+cat > "$TMPDIR/increment.gno" << EOF
+package main
+import c "$COUNTER_PKGPATH"
+func main() { c.Increment() }
+EOF
+
+echo ""
+echo "Launching precision bombardment..."
+
+for i in $(seq 1 "$N"); do
+    wkey="${WALLET_KEYS[$i-1]}"
+    rpc="${RPCS[$i-1]}"
+    (
+        echo -n "⚖️  $wkey → $rpc : "
+        for _ in $(seq 1 "$TX_PER_ACCOUNT"); do
+            echo "$PASSWORD" | gnokey maketx run \
+                -broadcast -chainid "$CHAINID" -remote "$rpc" \
+                -gas-fee 1000000ugnot -gas-wanted 3000000 \
+                -insecure-password-stdin=true -home "$GNOKEY_HOME" \
+                "$wkey" "$TMPDIR/increment.gno" > /dev/null 2>&1
+            echo -n "."
+            sleep "$TX_DELAY"
+        done
+        echo " ✅"
+    ) &
+done
+
+wait
+echo ""
+echo "=== Final counter per RPC ==="
+EXPECTED=$(( N * TX_PER_ACCOUNT ))
+ATTEMPTED=$(( N * TX_PER_ACCOUNT ))
+FIRST_VAL=""
+ALL_SAME=true
+for rpc in "${RPCS[@]}"; do
+    val=$(gnokey query "vm/qeval" -remote "$rpc" \
+        -data "${COUNTER_PKGPATH}.Render(\"\")" 2>/dev/null | grep -oE '[0-9]+' | tail -1)
+    echo "   $rpc → ${val:-0}"
+    if [ -z "$FIRST_VAL" ]; then
+        FIRST_VAL="${val:-0}"
+    elif [ "${val:-0}" != "$FIRST_VAL" ]; then
+        ALL_SAME=false
+    fi
+done
+
+echo "   committed: $FIRST_VAL / $ATTEMPTED txs attempted"
+if $ALL_SAME && [ "${FIRST_VAL:-0}" -gt 0 ]; then
+    echo "[PASS] all nodes converged at $FIRST_VAL"
+    exit 0
+fi
+echo "[FAIL] nodes diverged or no txs committed" && exit 1
