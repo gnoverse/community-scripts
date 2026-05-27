@@ -35,12 +35,7 @@ Every contributor subdirectory must expose these four rules:
 | `tests-one-shot`          | Runs tests that deploy on-chain state (realm deploys...)            |
 | `tests-repeatable`        | Runs tests that can be re-executed safely                           |
 
-All rules accept `REMOTES` (comma-separated RPC list) and `CHAINID` variables.
-
-**REMOTES semantics:** one-shot and repeatable tests should use only the first RPC
-(`${REMOTES%%,*}`). If your suite includes sybil/stress scenarios that target multiple
-validators in parallel, you may consume the full list internally — but this is an
-internal implementation detail, not a requirement of the contract.
+All rules accept `REMOTE` (single RPC endpoint) and `CHAINID` variables.
 
 Before each run, the root Makefile calls `list-funding-*`, passes the returned
 addresses to the funder script (test1), then runs the tests.
@@ -49,11 +44,11 @@ Run `make help` from any directory to list available targets.
 
 ## Running tests
 
-Against test-13 with 3 validator nodes:
+Against test-13:
 
 ```sh
 make tests-one-shot \
-  REMOTES=https://rpc.test-13-aeddi-1.gnoland.network,https://rpc.test-13-gfanton-1.gnoland.network,https://rpc.test-13-moul-1.gnoland.network \
+  REMOTE=https://rpc.test-13-aeddi-1.gnoland.network \
   CHAINID=test-13 \
   FUNDER_SCRIPT=./funders/test-13.sh
 ```
@@ -61,21 +56,13 @@ make tests-one-shot \
 Against a single custom RPC:
 
 ```sh
-make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
+make tests-one-shot REMOTE=https://rpc.test12.testnets.gno.land CHAINID=test12
 ```
 
-Against multiple validator nodes (stress tests will hit each one):
+With a custom funder:
 
 ```sh
-make tests-one-shot \
-  REMOTES=https://rpc1.gnoland.network,https://rpc2.gnoland.network,https://rpc3.gnoland.network \
-  CHAINID=test-13
-```
-
-With a custom funder script:
-
-```sh
-make tests-one-shot FUNDER_SCRIPT=./funders/test-13.sh REMOTES=... CHAINID=test-13
+make tests-one-shot FUNDER_SCRIPT=./funders/test-13.sh REMOTE=... CHAINID=test-13
 ```
 
 Directly from a contributor subdirectory:
@@ -83,7 +70,7 @@ Directly from a contributor subdirectory:
 ```sh
 cd tests/samourai-crew
 make help
-make tests-one-shot REMOTES=https://rpc.test12.testnets.gno.land CHAINID=test12
+make tests-one-shot REMOTE=https://rpc.test12.testnets.gno.land CHAINID=test12
 ```
 
 ## Adding your own tests
@@ -121,7 +108,7 @@ list-funding-repeatable:
 
 tests-one-shot: build
     docker run --rm \
-        -e REMOTES=$(REMOTES) \
+        -e REMOTE=$(REMOTE) \
         -e CHAINID=$(CHAINID) \
         -e MY_ADDR=$(ADDR_1) \
         -e MY_MNEMONIC=$(MNEMONIC_1) \
@@ -140,7 +127,7 @@ truth: if you rotate a key, you update one place.
 Your `Dockerfile` must:
 
 - Accept `one-shot` or `repeatable` as a command argument
-- Read `REMOTES`, `CHAINID`, and any account variables from env (injected via `docker run -e`)
+- Read `REMOTE`, `CHAINID`, and any account variables from env (injected via `docker run -e`)
 - Sign the network CLA if required (see `samourai-crew/run_tests.sh` for an example)
 
 **Do not hardcode mnemonics in the Dockerfile.** Define them in your Makefile and pass
@@ -153,7 +140,7 @@ The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew
 
 | Variable      | Source            | Description                                          |
 | ------------- | ----------------- | ---------------------------------------------------- |
-| `REMOTES`     | root Makefile     | Comma-separated list of RPC endpoints                |
+| `REMOTE`      | root Makefile     | Single RPC endpoint                                  |
 | `CHAINID`     | root Makefile     | Chain ID                                             |
 | `MY_ADDR`     | your Makefile     | Your testnet account address (name it as you like)   |
 | `MY_MNEMONIC` | your Makefile     | Your testnet mnemonic (name it as you like)          |
@@ -161,18 +148,13 @@ The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew
 `MY_ADDR` and `MY_MNEMONIC` are examples — use whatever variable names match your suite.
 All account variables must be declared in your Makefile and passed via `docker run -e`.
 
-**Parsing REMOTES inside your container:**
-CI always passes the full RPC list. Your container's entrypoint must parse `REMOTES`
-itself — the Makefile passes it as-is. The expected convention:
+**Reading REMOTE inside your container:**
+CI passes the RPC endpoint as `REMOTE`. Your container's entrypoint reads it directly.
 
-- **Standard tests** (one-shot, repeatable): extract the first entry and use it as the single RPC.
-- **Stress / sybil tests**: consume the full list, one entry per validator node.
-
-How you parse it depends on your language. The concept is: split on `,`, take index 0.
 Example in shell:
 
 ```sh
-REMOTE="${REMOTES%%,*}"   # first entry from comma-separated list
+REMOTE="${REMOTE:-http://127.0.0.1:26657}"
 ```
 
 See `tests/samourai-crew/` for a complete shell-based implementation.

@@ -3,7 +3,7 @@
 # Funds a list of address/amount pairs, topping up to the requested balance.
 #
 # Required env (no defaults — exits if any is missing):
-#   REMOTES         — RPC endpoint(s), comma-separated (first one is used)
+#   REMOTE          — RPC endpoint
 #   CHAINID         — chain ID
 #   FUNDER_MNEMONIC — sender mnemonic
 #
@@ -15,7 +15,7 @@ if ! command -v gnokey > /dev/null 2>&1; then
     FUNDERS_DIR="$(cd "$(dirname "$0")" && pwd)"
     exec docker run --rm \
         --entrypoint /bin/sh \
-        -e REMOTES \
+        -e REMOTE \
         -e CHAINID \
         -e FUNDER_MNEMONIC \
         -v "${FUNDERS_DIR}:/funders:ro" \
@@ -23,11 +23,9 @@ if ! command -v gnokey > /dev/null 2>&1; then
         "/funders/$(basename "$0")" "$@"
 fi
 
-: "${REMOTES:?REMOTES is required}"
+: "${REMOTE:?REMOTE is required}"
 : "${CHAINID:?CHAINID is required}"
 : "${FUNDER_MNEMONIC:?FUNDER_MNEMONIC is required}"
-
-REMOTE="${REMOTES%%,*}"
 
 if [ "$#" -eq 0 ] || [ $(( $# % 2 )) -ne 0 ]; then
     echo "Usage: $0 <addr1> <amount1> [<addr2> <amount2> ...]"

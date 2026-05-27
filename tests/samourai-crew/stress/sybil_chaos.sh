@@ -1,15 +1,13 @@
 #!/bin/bash
-# Sybil chaos: N wallets bombard N RPCs fully in parallel.
+# Sybil chaos: N wallets bombard a single REMOTE fully in parallel.
 # Each wallet fires TX_PER_ACCOUNT transactions without waiting.
 #
 # Expected env (set by run_tests.sh):
-#   KEY, PASSWORD, CHAINID, GNOKEY_HOME, KEY_ADDR
-#   REMOTES — comma-separated RPC list (falls back to $REMOTE)
-#   stress_1, stress_2, stress_3 keys must be imported in GNOKEY_HOME
+#   KEY, PASSWORD, CHAINID, REMOTE, GNOKEY_HOME, KEY_ADDR
+#   stress_1 (=KEY), stress_2, stress_3 keys imported in GNOKEY_HOME
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
-REMOTES="${REMOTES:-${REMOTE:-http://127.0.0.1:26657}}"
 SUFFIX=$(date +%s)
 COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/chaos${SUFFIX}"
 TMPDIR=$(mktemp -d)
@@ -17,26 +15,17 @@ trap 'rm -rf "$TMPDIR"' EXIT
 
 echo "🌪️  SYBIL CHAOS — parallel bombardment"
 
-IFS=',' read -ra RPCS <<< "$REMOTES"
-N=${#RPCS[@]}
-echo "   RPCs    : $N"
-echo "   Txs/key : $TX_PER_ACCOUNT"
-echo ""
-
-# Build wallet list: first slot = runner (KEY), then stress_2, stress_3...
-WALLET_KEYS=()
-for i in $(seq 1 "$N"); do
-    if [ "$i" -eq 1 ]; then
-        WALLET_KEYS+=("$KEY")
-    else
-        wkey="stress_${i}"
-        if gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "^[0-9]*\. $wkey "; then
-            WALLET_KEYS+=("$wkey")
-        else
-            echo "FAIL: stress key $wkey not found in keystore"; exit 1
-        fi
+WALLET_KEYS=("$KEY")
+for i in 2 3; do
+    wkey="stress_${i}"
+    if gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -q "^[0-9]*\. $wkey "; then
+        WALLET_KEYS+=("$wkey")
     fi
 done
+N=${#WALLET_KEYS[@]}
+echo "   Wallets : $N → $REMOTE"
+echo "   Txs/key : $TX_PER_ACCOUNT"
+echo ""
 
 # Deploy counter realm
 echo "Deploying counter realm..."
@@ -46,7 +35,7 @@ echo "$PASSWORD" | gnokey maketx addpkg \
     -pkgpath "$COUNTER_PKGPATH" \
     -pkgdir "$TMPDIR" \
     -gas-fee 1000000ugnot -gas-wanted 10000000 \
-    -broadcast -chainid "$CHAINID" -remote "${RPCS[0]}" \
+    -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
 
@@ -61,12 +50,11 @@ echo "Launching parallel bombardment..."
 
 for i in $(seq 1 "$N"); do
     wkey="${WALLET_KEYS[$i-1]}"
-    rpc="${RPCS[$i-1]}"
     (
-        echo -n "🚀 $wkey → $rpc : "
+        echo -n "🚀 $wkey → $REMOTE : "
         for _ in $(seq 1 "$TX_PER_ACCOUNT"); do
             echo "$PASSWORD" | gnokey maketx run \
-                -broadcast -chainid "$CHAINID" -remote "$rpc" \
+                -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
                 -gas-fee 1000000ugnot -gas-wanted 3000000 \
                 -insecure-password-stdin=true -home "$GNOKEY_HOME" \
                 "$wkey" "$TMPDIR/increment.gno" > /dev/null 2>&1
@@ -81,24 +69,15 @@ echo ""
 echo "Waiting for consensus to settle..."
 sleep 5
 
-echo "=== Final counter per RPC ==="
+echo "=== Final counter ==="
 ATTEMPTED=$(( N * TX_PER_ACCOUNT ))
-FIRST_VAL=""
-ALL_SAME=true
-for rpc in "${RPCS[@]}"; do
-    val=$(gnokey query "vm/qeval" -remote "$rpc" \
-        -data "${COUNTER_PKGPATH}.Render(\"\")" 2>/dev/null | grep -oE '[0-9]+' | tail -1)
-    echo "   $rpc → ${val:-0}"
-    if [ -z "$FIRST_VAL" ]; then
-        FIRST_VAL="${val:-0}"
-    elif [ "${val:-0}" != "$FIRST_VAL" ]; then
-        ALL_SAME=false
-    fi
-done
-
+val=$(gnokey query "vm/qeval" -remote "$REMOTE" \
+    -data "${COUNTER_PKGPATH}.Render(\"\")" 2>/dev/null | grep -oE '[0-9]+' | tail -1)
+echo "   $REMOTE → ${val:-0}"
+FIRST_VAL="${val:-0}"
 echo "   committed: $FIRST_VAL / $ATTEMPTED txs attempted"
-if $ALL_SAME && [ "${FIRST_VAL:-0}" -gt 0 ]; then
-    echo "[PASS] all nodes converged at $FIRST_VAL"
+if [ "${FIRST_VAL:-0}" -gt 0 ]; then
+    echo "[PASS] $FIRST_VAL txs committed"
     exit 0
 fi
-echo "[FAIL] nodes diverged or no txs committed" && exit 1
+echo "[FAIL] no txs committed" && exit 1

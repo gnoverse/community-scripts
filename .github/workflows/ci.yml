@@ -6,8 +6,8 @@ name: Community Tests
 on:
   workflow_call:
     inputs:
-      remotes:
-        description: 'RPC endpoint(s), comma-separated'
+      remote:
+        description: 'RPC endpoint'
         required: true
         type: string
       chain_id:
@@ -26,8 +26,8 @@ on:
 
   workflow_dispatch:
     inputs:
-      remotes:
-        description: 'RPC endpoint(s), comma-separated'
+      remote:
+        description: 'RPC endpoint'
         required: true
         type: string
       chain_id:
@@ -55,7 +55,7 @@ jobs:
       - name: Run one-shot tests
         run: |
           make tests-one-shot \
-            REMOTES="${{ inputs.remotes }}" \
+            REMOTE="${{ inputs.remote }}" \
             CHAINID="${{ inputs.chain_id }}" \
             FUNDER_SCRIPT="${{ inputs.funder_script }}"
 
@@ -68,6 +68,6 @@ jobs:
       - name: Run repeatable tests
         run: |
           make tests-repeatable \
-            REMOTES="${{ inputs.remotes }}" \
+            REMOTE="${{ inputs.remote }}" \
             CHAINID="${{ inputs.chain_id }}" \
             FUNDER_SCRIPT="${{ inputs.funder_script }}"

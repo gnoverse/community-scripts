@@ -1,11 +1,7 @@
 .PHONY: list-funding-one-shot list-funding-repeatable tests-one-shot tests-repeatable build help
 
-# REMOTES: comma-separated list of RPC endpoints.
-# one-shot and repeatable tests use only the first entry (${REMOTES%%,*}).
-# Sybil stress tests consume the full list — one wallet per RPC, in order.
-#   Single RPC:  make tests-one-shot REMOTES=https://rpc.test-13-aeddi-1.gnoland.network CHAINID=test-13
-#   Multi  RPC:  make tests-one-shot REMOTES=rpc1,rpc2,rpc3 CHAINID=test-13
-REMOTES                ?=
+# REMOTE: single RPC endpoint passed to the container.
+REMOTE                 ?=
 CHAINID                ?= test
 IMAGE                  := $(shell basename $(CURDIR))
 
@@ -31,10 +27,10 @@ list-funding-repeatable:
 build:
 	docker build -t $(IMAGE) .
 
-## tests-one-shot          : run one-shot tests (REMOTES, CHAINID)
+## tests-one-shot          : run one-shot tests (REMOTE, CHAINID)
 tests-one-shot: build
 	docker run --rm \
-		-e REMOTES=$(REMOTES) \
+		-e REMOTE=$(REMOTE) \
 		-e CHAINID=$(CHAINID) \
 		-e STRESS_ADDR_1=$(ADDR_1) \
 		-e STRESS_ADDR_2=$(ADDR_2) \
@@ -46,10 +42,10 @@ tests-one-shot: build
 		-e "RUNNER_MNEMONIC=$(MNEMONIC_1)" \
 		$(IMAGE) one-shot
 
-## tests-repeatable        : run repeatable tests (REMOTES, CHAINID)
+## tests-repeatable        : run repeatable tests (REMOTE, CHAINID)
 tests-repeatable: build
 	docker run --rm \
-		-e REMOTES=$(REMOTES) \
+		-e REMOTE=$(REMOTE) \
 		-e CHAINID=$(CHAINID) \
 		-e STRESS_ADDR_1=$(ADDR_1) \
 		-e STRESS_ADDR_2=$(ADDR_2) \
