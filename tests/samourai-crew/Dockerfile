@@ -16,12 +16,10 @@ RUN chmod +x run_tests.sh \
 ENV REMOTES=http://127.0.0.1:26657
 ENV CHAINID=test
 
-# 3 wallets — wallet 1 is both the runner (audit/e2e) and stress_1 (first RPC)
-ENV STRESS_MNEMONIC_1="chair require about ask exhaust you already finger shop turn glory spare credit april rose sniff whale news economy birth table trim raccoon grit"
-ENV STRESS_MNEMONIC_2="knock hat consider bicycle kit lion all cover lawn humble picnic win exit never message leader brother reform silk butter private protect tuition draw"
-ENV STRESS_MNEMONIC_3="galaxy fire athlete egg three crane stone borrow thought cover story poem blush scissors pause slice unusual spread jewel visual tail parent bargain occur"
-
-# runner = wallet 1
-ENV RUNNER_MNEMONIC="${STRESS_MNEMONIC_1}"
+# Mnemonics are injected at runtime via docker run -e (see tests/samourai-crew/Makefile)
+ENV STRESS_MNEMONIC_1=""
+ENV STRESS_MNEMONIC_2=""
+ENV STRESS_MNEMONIC_3=""
+ENV RUNNER_MNEMONIC=""
 
 ENTRYPOINT ["/bin/sh", "/tests/run_tests.sh"]

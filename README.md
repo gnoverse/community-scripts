@@ -37,6 +37,11 @@ Every contributor subdirectory must expose these four rules:
 
 All rules accept `REMOTES` (comma-separated RPC list) and `CHAINID` variables.
 
+**REMOTES semantics:** one-shot and repeatable tests should use only the first RPC
+(`${REMOTES%%,*}`). If your suite includes sybil/stress scenarios that target multiple
+validators in parallel, you may consume the full list internally — but this is an
+internal implementation detail, not a requirement of the contract.
+
 Before each run, the root Makefile calls `list-funding-*`, passes the returned
 addresses to the funder script (test1), then runs the tests.
 
@@ -100,41 +105,77 @@ gnokey add my-test-account -recover
 
 ### 3. Edit the Makefile
 
-Declare your test account address and funding amounts:
+Declare your testnet account addresses and mnemonics as Makefile variables, then
+implement `list-funding-*` to return the `address amount` pairs the funder needs,
+and pass your variables to the container via `-e` in `tests-one-shot` / `tests-repeatable`.
 
 ```makefile
-ADDR_1 := g1your_address_here
-
-FUND_AMOUNT_ONE_SHOT   := 30000000ugnot   # ~30 transactions at 1M ugnot each
-FUND_AMOUNT_REPEATABLE := 10000000ugnot
+ADDR_1     := g1your_address_here
+MNEMONIC_1 := word1 word2 ... word24   # 24-word mnemonic for ADDR_1
 
 list-funding-one-shot:
-    @echo "$(ADDR_1) $(FUND_AMOUNT_ONE_SHOT)"
+    @echo "$(ADDR_1) 30000000ugnot"
 
 list-funding-repeatable:
-    @echo "$(ADDR_1) $(FUND_AMOUNT_REPEATABLE)"
+    @echo "$(ADDR_1) 10000000ugnot"
+
+tests-one-shot: build
+    docker run --rm \
+        -e REMOTES=$(REMOTES) \
+        -e CHAINID=$(CHAINID) \
+        -e MY_ADDR=$(ADDR_1) \
+        -e MY_MNEMONIC=$(MNEMONIC_1) \
+        $(IMAGE) one-shot
 ```
 
-**Multiple wallets:** declare all addresses in `list-funding-*` as space-separated
-`address amount` pairs. The funder will fund each one before the tests run.
+**Multiple wallets:** list all `address amount` pairs space-separated in `list-funding-*`.
+The funder will fund each one. Pass each address and mnemonic as a separate `-e` flag.
+
+**Never put mnemonics in the Dockerfile** — define them in the Makefile and inject them
+at runtime via `docker run -e`. This keeps addresses and mnemonics as a single source of
+truth: if you rotate a key, you update one place.
 
 ### 4. Write your Dockerfile
 
 Your `Dockerfile` must:
 
 - Accept `one-shot` or `repeatable` as a command argument
-- Contain your test account mnemonic (testnet key, no real value)
-- Read `REMOTES` and `CHAINID` from env
+- Read `REMOTES`, `CHAINID`, and any account variables from env (injected via `docker run -e`)
 - Sign the network CLA if required (see `samourai-crew/run_tests.sh` for an example)
+
+**Do not hardcode mnemonics in the Dockerfile.** Define them in your Makefile and pass
+them at runtime via `docker run -e` (see step 3). This way addresses and mnemonics stay
+in one place and the Dockerfile contains only logic, not secrets.
 
 The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew/` for a shell-based example.
 
 ### 5. What your container receives at runtime
 
-| Variable  | Description                                         |
-| --------- | --------------------------------------------------- |
-| `REMOTES` | Comma-separated list of RPC endpoints               |
-| `CHAINID` | Chain ID                                            |
+| Variable      | Source            | Description                                          |
+| ------------- | ----------------- | ---------------------------------------------------- |
+| `REMOTES`     | root Makefile     | Comma-separated list of RPC endpoints                |
+| `CHAINID`     | root Makefile     | Chain ID                                             |
+| `MY_ADDR`     | your Makefile     | Your testnet account address (name it as you like)   |
+| `MY_MNEMONIC` | your Makefile     | Your testnet mnemonic (name it as you like)          |
+
+`MY_ADDR` and `MY_MNEMONIC` are examples — use whatever variable names match your suite.
+All account variables must be declared in your Makefile and passed via `docker run -e`.
+
+**Parsing REMOTES inside your container:**
+CI always passes the full RPC list. Your container's entrypoint must parse `REMOTES`
+itself — the Makefile passes it as-is. The expected convention:
+
+- **Standard tests** (one-shot, repeatable): extract the first entry and use it as the single RPC.
+- **Stress / sybil tests**: consume the full list, one entry per validator node.
+
+How you parse it depends on your language. The concept is: split on `,`, take index 0.
+Example in shell:
+
+```sh
+REMOTE="${REMOTES%%,*}"   # first entry from comma-separated list
+```
+
+See `tests/samourai-crew/` for a complete shell-based implementation.
 
 The funding has already been done by the time your container starts.
 
