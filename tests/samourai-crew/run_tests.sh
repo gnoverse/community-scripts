@@ -91,7 +91,7 @@ if [ -n "$CLA_HASH" ]; then
     gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -oE '^[0-9]+\. [^ ]+' | awk '{print $2}' | while read -r k; do
         [ "$k" != "$KEY" ] && sign_cla "$k"
     done
-    sleep 2
+    sleep 10
 fi
 echo ""
 
