@@ -1,28 +1,18 @@
 .PHONY: list-funding-one-shot list-funding-repeatable tests-one-shot tests-repeatable build help
 
-# All runtime variables (account addresses, mnemonics, etc.) must be defined in this
-# Makefile and injected into the container via `docker run -e`. Do not hardcode them
-# in the Dockerfile — the Makefile is the single source of truth for account config.
-
-# REMOTE: single RPC endpoint passed to the container.
 REMOTE ?=
 CHAINID ?= test
 IMAGE   := $(shell basename $(CURDIR))
 
-# Declare your testnet account addresses and mnemonics here (one pair per wallet).
-# Each address must match its mnemonic — they are the single source of truth for account config.
-# Inject them into the container via docker run -e in tests-one-shot / tests-repeatable below.
-# ADDR_1     := g1your_address_here
-# MNEMONIC_1 := word1 word2 ... word24
 
 ## list-funding-one-shot   : print address/amount pairs to fund before one-shot tests
 list-funding-one-shot:
-	@# Example: @echo "$(ADDR_1) 30000000ugnot $(ADDR_2) 10000000ugnot"
+	@# Example: @echo "g1_addr1 30000000ugnot g1_addr2 10000000ugnot"
 	@echo "not implemented" >&2 && exit 1
 
 ## list-funding-repeatable : print address/amount pairs to fund before repeatable tests
 list-funding-repeatable:
-	@# Example: @echo "$(ADDR_1) 10000000ugnot"
+	@# Example: @echo "g1_addr1 10000000ugnot"
 	@echo "not implemented" >&2 && exit 1
 
 ## build                   : build the Docker test image

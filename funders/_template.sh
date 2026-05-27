@@ -11,7 +11,6 @@
 # To override any default at call time:
 #   REMOTE=https://my-rpc.example.com FUNDER_SCRIPT=./funders/test-14.sh make tests-one-shot CHAINID=test-14
 
-# Single RPC endpoint for this network.
 REMOTE="${REMOTE:-https://rpc.your-network.example.com}"
 
 # Chain ID of the target network.

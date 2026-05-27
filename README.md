@@ -92,35 +92,21 @@ gnokey add my-test-account -recover
 
 ### 3. Edit the Makefile
 
-Declare your testnet account addresses and mnemonics as Makefile variables, then
-implement `list-funding-*` to return the `address amount` pairs the funder needs,
-and pass your variables to the container via `-e` in `tests-one-shot` / `tests-repeatable`.
+Implement `list-funding-one-shot` and `list-funding-repeatable` so they print
+space-separated `address amount` pairs — one pair per account that needs funding:
 
-```makefile
-ADDR_1     := g1your_address_here
-MNEMONIC_1 := word1 word2 ... word24   # 24-word mnemonic for ADDR_1
-
-list-funding-one-shot:
-    @echo "$(ADDR_1) 30000000ugnot"
-
-list-funding-repeatable:
-    @echo "$(ADDR_1) 10000000ugnot"
-
-tests-one-shot: build
-    docker run --rm \
-        -e REMOTE=$(REMOTE) \
-        -e CHAINID=$(CHAINID) \
-        -e MY_ADDR=$(ADDR_1) \
-        -e MY_MNEMONIC=$(MNEMONIC_1) \
-        $(IMAGE) one-shot
+```text
+g1abc...  30000000ugnot
+g1def...  10000000ugnot
 ```
 
-**Multiple wallets:** list all `address amount` pairs space-separated in `list-funding-*`.
-The funder will fund each one. Pass each address and mnemonic as a separate `-e` flag.
+Multiple pairs on a single line or across lines are both accepted. If you have no
+tests of a given type, return an empty string (the funder skips it cleanly).
 
-**Never put mnemonics in the Dockerfile** — define them in the Makefile and inject them
-at runtime via `docker run -e`. This keeps addresses and mnemonics as a single source of
-truth: if you rotate a key, you update one place.
+How you store and supply the addresses and mnemonics is up to you — Makefile
+variables, a sourced env file, a helper script, or anything else. What matters is
+that `list-funding-*` produces the right output and that `tests-one-shot` /
+`tests-repeatable` inject the credentials the container needs.
 
 ### 4. Write your Dockerfile
 
@@ -145,8 +131,7 @@ The image can use **any language** (shell, Go, Python, etc.). See `samourai-crew
 | `MY_ADDR`     | your Makefile     | Your testnet account address (name it as you like)   |
 | `MY_MNEMONIC` | your Makefile     | Your testnet mnemonic (name it as you like)          |
 
-`MY_ADDR` and `MY_MNEMONIC` are examples — use whatever variable names match your suite.
-All account variables must be declared in your Makefile and passed via `docker run -e`.
+`MY_ADDR` and `MY_MNEMONIC` are examples — use whatever variable names and injection mechanism fit your setup.
 
 **Reading REMOTE inside your container:**
 CI passes the RPC endpoint as `REMOTE`. Your container's entrypoint reads it directly.
