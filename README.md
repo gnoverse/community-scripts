@@ -161,6 +161,72 @@ See `tests/samourai-crew/` for a complete shell-based implementation.
 
 The funding has already been done by the time your container starts.
 
+## Adding a new network to CI
+
+To wire a new chain into CI, you need two files.
+
+### 1. Create a funder script
+
+```sh
+cp funders/_template.sh funders/my-chain.sh
+```
+
+Edit `funders/my-chain.sh` and set the three defaults:
+
+```sh
+REMOTE="${REMOTE:-https://rpc.my-chain.example.com}"
+CHAINID="${CHAINID:-my-chain-id}"
+FUNDER_MNEMONIC="${FUNDER_MNEMONIC:-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast}"
+```
+
+The last line is the public test1 mnemonic — replace it if your network uses a different funded account.
+
+### 2. Create a workflow file
+
+```sh
+cp .github/workflows/test-13.yml .github/workflows/my-chain.yml
+```
+
+Edit `.github/workflows/my-chain.yml`:
+
+```yaml
+name: my-chain
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type'
+        type: choice
+        default: both
+        options: [one-shot, repeatable, both]
+
+jobs:
+  run:
+    uses: ./.github/workflows/ci.yml
+    with:
+      remote: ${{ vars.REMOTE_MY_CHAIN || 'https://rpc.my-chain.example.com' }}
+      chain_id: ${{ vars.CHAINID_MY_CHAIN || 'my-chain-id' }}
+      funder_script: ./funders/my-chain.sh
+      test_type: ${{ inputs.test_type || 'both' }}
+```
+
+### 3. (Optional) Override the RPC via repository variable
+
+If the network RPC changes without a code update, set a repository variable in
+**GitHub → Settings → Secrets and variables → Actions → Variables**:
+
+| Variable           | Example value                           |
+| ------------------ | --------------------------------------- |
+| `REMOTE_MY_CHAIN`  | `https://rpc.my-chain.example.com`      |
+| `CHAINID_MY_CHAIN` | `my-chain-id`                           |
+
+The workflow reads these at runtime and falls back to the hardcoded defaults if not set.
+
 ## Current contributors
 
 | Directory              | Description                                                        |
