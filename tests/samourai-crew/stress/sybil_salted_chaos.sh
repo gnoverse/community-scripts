@@ -3,6 +3,8 @@
 # salt per tx to prevent transaction deduplication.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=common.sh
+. "$SCRIPT_DIR/common.sh"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 SUFFIX=$(date +%s)
 COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/salted${SUFFIX}"
@@ -33,6 +35,7 @@ echo "$PASSWORD" | gnokey maketx addpkg \
     -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
+wait_for_package "$COUNTER_PKGPATH"
 
 cat > "$TMPDIR/increment.gno" << EOF
 package main
