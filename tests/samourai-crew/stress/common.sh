@@ -22,11 +22,13 @@ wait_for_package() {
 }
 
 # Return the current committed sequence for ADDR (empty string on error).
+# Handles both compact ("sequence":"5") and spaced ("sequence": "5") JSON,
+# as well as integer values ("sequence": 5).
 get_sequence() {
     ADDR="$1"
     gnokey query "auth/accounts/$ADDR" \
         -remote "$REMOTE" 2>/dev/null \
-        | grep -oE '"sequence":"[0-9]+"' | grep -oE '[0-9]+$'
+        | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$'
 }
 
 # Poll auth/accounts until the account sequence for ADDR is >= EXPECTED (max 30s).

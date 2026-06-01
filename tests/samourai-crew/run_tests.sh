@@ -28,7 +28,7 @@ wait_for_sequence_gte() {
     while [ "$RETRIES" -gt 0 ]; do
         CURR=$(gnokey query "auth/accounts/$KEY_ADDR" \
             -remote "$REMOTE" 2>/dev/null \
-            | grep -oE '"sequence":"[0-9]+"' | grep -oE '[0-9]+$')
+            | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
         if [ -n "$CURR" ] && [ "$CURR" -ge "$EXPECTED" ]; then
             echo " done (seq=$CURR)"
             return 0
@@ -127,7 +127,7 @@ if [ -n "$CLA_HASH" ]; then
     echo "Signing CLA (hash: $CLA_HASH)..."
     SEQ_BEFORE=$(gnokey query "auth/accounts/$KEY_ADDR" \
         -remote "$REMOTE" 2>/dev/null \
-        | grep -oE '"sequence":"[0-9]+"' | grep -oE '[0-9]+$')
+        | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
     SEQ_BEFORE="${SEQ_BEFORE:-0}"
 
     sign_cla "$KEY"
