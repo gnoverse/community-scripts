@@ -19,14 +19,15 @@ export KEY="runner"
 export PASSWORD="runner1234"
 export KEY_ADDR="${RUNNER_ADDR}"
 
-# Poll auth/accounts until the account sequence is >= EXPECTED.
+# Poll auth/accounts until the account sequence for ADDR is >= EXPECTED.
 # Exits 0 (non-fatal) after 30s even if not reached — tests will surface the real error.
 wait_for_sequence_gte() {
-    EXPECTED="$1"
+    ADDR="$1"
+    EXPECTED="$2"
     RETRIES=30
     printf "  Waiting for account sequence >= %s ..." "$EXPECTED"
     while [ "$RETRIES" -gt 0 ]; do
-        CURR=$(gnokey query "auth/accounts/$KEY_ADDR" \
+        CURR=$(gnokey query "auth/accounts/$ADDR" \
             -remote "$REMOTE" 2>/dev/null \
             | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
         if [ -n "$CURR" ] && [ "$CURR" -ge "$EXPECTED" ]; then
@@ -69,7 +70,7 @@ import_key() {
         -home "$GNOKEY_HOME" 2>&1)
     if echo "$OUT" | grep -qiE "already exists"; then
         echo "already exists, skipping"
-    elif echo "$OUT" | grep -qiE "error|failed|panic"; then
+    elif echo "$OUT" | grep -qiE "error:|failed to|panic"; then
         echo "FAILED"
         echo "$OUT"
         exit 1
@@ -112,10 +113,9 @@ sign_cla() {
         "$SIGNER_KEY" 2>&1)
     if echo "$OUT" | grep -q "OK!\|TX HASH"; then
         echo "signed"
-        return 1  # 1 = tx was sent, sequence incremented
+        CLA_SENT=1
     elif echo "$OUT" | grep -qiE "already signed"; then
         echo "already signed"
-        return 0  # 0 = no tx sent, sequence unchanged
     else
         echo "ERROR"
         echo "$OUT"
@@ -130,15 +130,15 @@ if [ -n "$CLA_HASH" ]; then
         | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
     SEQ_BEFORE="${SEQ_BEFORE:-0}"
 
+    CLA_SENT=0
     sign_cla "$KEY"
-    CLA_SENT=$?
 
     gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -oE '^[0-9]+\. [^ ]+' | awk '{print $2}' | while read -r k; do
         [ "$k" != "$KEY" ] && sign_cla "$k"
     done
 
     if [ "$CLA_SENT" -eq 1 ]; then
-        wait_for_sequence_gte $((SEQ_BEFORE + 1))
+        wait_for_sequence_gte "$KEY_ADDR" $((SEQ_BEFORE + 1))
     fi
 fi
 echo ""
