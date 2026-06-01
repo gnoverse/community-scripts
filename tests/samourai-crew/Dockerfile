@@ -14,7 +14,7 @@ COPY run_tests.sh .
 RUN chmod +x run_tests.sh \
     && find audit e2e stress security-markdown -name "*.sh" -exec chmod +x {} +
 
-ENV REMOTES=http://127.0.0.1:26657
+ENV REMOTE=http://127.0.0.1:26657
 ENV CHAINID=test
 
 # Mnemonics are injected at runtime via docker run -e (see tests/samourai-crew/Makefile)
