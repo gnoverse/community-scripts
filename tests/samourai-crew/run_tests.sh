@@ -60,19 +60,31 @@ while [ "$RETRIES" -gt 0 ]; do
 done
 
 # --- import all keys before CLA signing ---
-printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
-    gnokey add "$KEY" -recover -insecure-password-stdin=true \
-    -home "$GNOKEY_HOME" > /dev/null 2>&1
+import_key() {
+    IK_NAME="$1"
+    IK_MNEMONIC="$2"
+    printf "  Importing key %s ... " "$IK_NAME"
+    OUT=$(printf "%s\n%s\n%s\n" "$IK_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "$IK_NAME" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" 2>&1)
+    if echo "$OUT" | grep -qiE "already exists"; then
+        echo "already exists, skipping"
+    elif echo "$OUT" | grep -qiE "error|failed|panic"; then
+        echo "FAILED"
+        echo "$OUT"
+        exit 1
+    else
+        echo "OK"
+    fi
+}
+
+import_key "$KEY" "$RUNNER_MNEMONIC"
 
 if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_2" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
+    import_key "stress_2" "$STRESS_MNEMONIC_2"
 fi
 if [ -n "$STRESS_MNEMONIC_3" ] && [ "$STRESS_MNEMONIC_3" != "TODO_REPLACE_STRESS_MNEMONIC_3" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_3" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_3" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
+    import_key "stress_3" "$STRESS_MNEMONIC_3"
 fi
 
 # --- sign CLA if required by the network ---
