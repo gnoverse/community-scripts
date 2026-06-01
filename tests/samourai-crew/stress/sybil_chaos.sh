@@ -7,6 +7,8 @@
 #   stress_1 (=KEY), stress_2, stress_3 keys imported in GNOKEY_HOME
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=common.sh
+. "$SCRIPT_DIR/common.sh"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 SUFFIX=$(date +%s)
 COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/chaos${SUFFIX}"
@@ -38,6 +40,7 @@ echo "$PASSWORD" | gnokey maketx addpkg \
     -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
+wait_for_package "$COUNTER_PKGPATH"
 
 cat > "$TMPDIR/increment.gno" << EOF
 package main
