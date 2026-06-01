@@ -19,6 +19,27 @@ export KEY="runner"
 export PASSWORD="runner1234"
 export KEY_ADDR="${RUNNER_ADDR}"
 
+# Poll auth/accounts until the account sequence is >= EXPECTED.
+# Exits 0 (non-fatal) after 30s even if not reached — tests will surface the real error.
+wait_for_sequence_gte() {
+    EXPECTED="$1"
+    RETRIES=30
+    printf "  Waiting for account sequence >= %s ..." "$EXPECTED"
+    while [ "$RETRIES" -gt 0 ]; do
+        CURR=$(gnokey query "auth/accounts/$KEY_ADDR" \
+            -remote "$REMOTE" 2>/dev/null \
+            | grep -oE '"sequence":"[0-9]+"' | grep -oE '[0-9]+$')
+        if [ -n "$CURR" ] && [ "$CURR" -ge "$EXPECTED" ]; then
+            echo " done (seq=$CURR)"
+            return 0
+        fi
+        RETRIES=$((RETRIES - 1))
+        sleep 1
+    done
+    echo " WARNING: timed out waiting for sequence >= $EXPECTED, continuing"
+    return 0
+}
+
 echo "Remote : $REMOTE"
 echo "Chain  : $CHAINID"
 echo "Mode   : $MODE"
