@@ -110,20 +110,36 @@ sign_cla() {
         -insecure-password-stdin=true \
         -home "$GNOKEY_HOME" \
         "$SIGNER_KEY" 2>&1)
-    if echo "$OUT" | grep -q "OK\|already signed\|TX HASH"; then
-        echo "OK"
+    if echo "$OUT" | grep -q "OK!\|TX HASH"; then
+        echo "signed"
+        return 1  # 1 = tx was sent, sequence incremented
+    elif echo "$OUT" | grep -qiE "already signed"; then
+        echo "already signed"
+        return 0  # 0 = no tx sent, sequence unchanged
     else
-        echo "signed or skipped"
+        echo "ERROR"
+        echo "$OUT"
+        exit 1
     fi
 }
 
 if [ -n "$CLA_HASH" ]; then
     echo "Signing CLA (hash: $CLA_HASH)..."
+    SEQ_BEFORE=$(gnokey query "auth/accounts/$KEY_ADDR" \
+        -remote "$REMOTE" 2>/dev/null \
+        | grep -oE '"sequence":"[0-9]+"' | grep -oE '[0-9]+$')
+    SEQ_BEFORE="${SEQ_BEFORE:-0}"
+
     sign_cla "$KEY"
+    CLA_SENT=$?
+
     gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -oE '^[0-9]+\. [^ ]+' | awk '{print $2}' | while read -r k; do
         [ "$k" != "$KEY" ] && sign_cla "$k"
     done
-    sleep 10
+
+    if [ "$CLA_SENT" -eq 1 ]; then
+        wait_for_sequence_gte $((SEQ_BEFORE + 1))
+    fi
 fi
 echo ""
 
