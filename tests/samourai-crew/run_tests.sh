@@ -133,6 +133,19 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "e2e_mempool_stress" /tests/e2e/e2e_mempool_stress.sh
 
     echo ""
+    echo "=== Security Markdown Audit (KNOWN VULNERABLE — gnolang/gno#5714) ==="
+    run_test "audit_md_title_leak"     /tests/security-markdown/audit_md_title_leak.sh \
+        "Render() returns unsanitized title, see gnolang/gno#5714"
+    run_test "audit_md_html_inject"    /tests/security-markdown/audit_md_html_inject.sh \
+        "Render() returns raw HTML tag, see gnolang/gno#5714"
+    run_test "audit_md_link_hijack"    /tests/security-markdown/audit_md_link_hijack.sh \
+        "Render() returns hijacked link URL, see gnolang/gno#5714"
+    run_test "audit_md_blockquote"     /tests/security-markdown/audit_md_blockquote.sh \
+        "Render() returns injected blockquote, see gnolang/gno#5714"
+    run_test "audit_md_image_tracking" /tests/security-markdown/audit_md_image_tracking.sh \
+        "Render() returns external image URL, see gnolang/gno#5714"
+
+    echo ""
     echo "=== Stress Tests ==="
     run_test "sybil_chaos"        /tests/stress/sybil_chaos.sh
     run_test "sybil_precision"    /tests/stress/sybil_precision.sh
