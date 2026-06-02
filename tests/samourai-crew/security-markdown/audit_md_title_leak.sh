@@ -1,8 +1,10 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vector: user-controlled title injected unsanitized into markdown body,
-# allowing arbitrary headings to be rendered in a proposal or page.
-# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
+# PR #5714 MERGED (2026-05-28): p/nt/markdown/sanitize/v0 library now available.
+# Vector: title leak into body (heading injection via embedded newlines)
+# This test realm deliberately omits sanitize.InlineText() on the title field.
+# Without it, newlines in user-supplied titles escape into the markdown body.
+# Realm authors must call sanitize.InlineText() on any user-supplied single-line field.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh

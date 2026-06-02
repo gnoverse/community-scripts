@@ -1,11 +1,10 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vector: external image tracking pixel
-# An attacker who can inject markdown into Render() can embed an external image
-# URL. Gnoweb renders it as <img src="https://attacker.com/...">, causing every
-# visitor's browser to load the external resource — deanonymizing viewers.
-# If gnoweb ever fetches images server-side, this also becomes an SSRF vector.
-# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
+# PR #5714 MERGED (2026-05-28): p/nt/markdown/sanitize/v0 library now available.
+# Vector: external image tracking pixel (deanonymization + SSRF)
+# This test realm deliberately omits sanitize.ImageURL() to document the risk.
+# Without it, gnoweb renders <img src="https://attacker.com/..."> on every page view.
+# Realm authors must call sanitize.ImageURL() on any user-supplied image src.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh

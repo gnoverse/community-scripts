@@ -1,9 +1,9 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
+# PR #5714 MERGED (2026-05-28): p/nt/markdown/sanitize/v0 library now available.
 # Vector: blockquote context confusion
-# A user-controlled comment can inject a blockquote that visually mimics
-# an official statement from the core team.
-# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
+# This test realm deliberately omits sanitize.Block() to document the risk of
+# naive comment-aggregation patterns. Realm authors must call sanitize helpers explicitly.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh
