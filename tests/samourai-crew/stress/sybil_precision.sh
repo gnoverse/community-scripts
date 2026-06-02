@@ -3,6 +3,8 @@
 # sends txs sequentially with a small delay.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=common.sh
+. "$SCRIPT_DIR/common.sh"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 TX_DELAY="${TX_DELAY:-0.8}"
 SUFFIX=$(date +%s)
@@ -27,6 +29,8 @@ echo ""
 echo "Deploying counter realm..."
 cp "$SCRIPT_DIR/../realms/counter/counter.gno" "$TMPDIR/counter.gno"
 printf 'module = "%s"\ngno = "0.9"\n' "$COUNTER_PKGPATH" > "$TMPDIR/gnomod.toml"
+SEQ_BEFORE=$(get_sequence "$KEY_ADDR")
+SEQ_BEFORE="${SEQ_BEFORE:-0}"
 echo "$PASSWORD" | gnokey maketx addpkg \
     -pkgpath "$COUNTER_PKGPATH" \
     -pkgdir "$TMPDIR" \
@@ -34,6 +38,8 @@ echo "$PASSWORD" | gnokey maketx addpkg \
     -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
+wait_for_package "$COUNTER_PKGPATH"
+wait_for_sequence_gte "$KEY_ADDR" $((SEQ_BEFORE + 1))
 
 cat > "$TMPDIR/increment.gno" << EOF
 package main

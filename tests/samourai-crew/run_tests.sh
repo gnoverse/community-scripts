@@ -19,6 +19,28 @@ export KEY="runner"
 export PASSWORD="runner1234"
 export KEY_ADDR="${RUNNER_ADDR}"
 
+# Poll auth/accounts until the account sequence for ADDR is >= EXPECTED.
+# Exits 0 (non-fatal) after 30s even if not reached — tests will surface the real error.
+wait_for_sequence_gte() {
+    ADDR="$1"
+    EXPECTED="$2"
+    RETRIES=30
+    printf "  Waiting for account sequence >= %s ..." "$EXPECTED"
+    while [ "$RETRIES" -gt 0 ]; do
+        CURR=$(gnokey query "auth/accounts/$ADDR" \
+            -remote "$REMOTE" 2>/dev/null \
+            | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
+        if [ -n "$CURR" ] && [ "$CURR" -ge "$EXPECTED" ]; then
+            echo " done (seq=$CURR)"
+            return 0
+        fi
+        RETRIES=$((RETRIES - 1))
+        sleep 1
+    done
+    echo " WARNING: timed out waiting for sequence >= $EXPECTED, continuing"
+    return 0
+}
+
 echo "Remote : $REMOTE"
 echo "Chain  : $CHAINID"
 echo "Mode   : $MODE"
@@ -39,19 +61,31 @@ while [ "$RETRIES" -gt 0 ]; do
 done
 
 # --- import all keys before CLA signing ---
-printf "%s\n%s\n%s\n" "$RUNNER_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
-    gnokey add "$KEY" -recover -insecure-password-stdin=true \
-    -home "$GNOKEY_HOME" > /dev/null 2>&1
+import_key() {
+    IK_NAME="$1"
+    IK_MNEMONIC="$2"
+    printf "  Importing key %s ... " "$IK_NAME"
+    OUT=$(printf "%s\n%s\n%s\n" "$IK_MNEMONIC" "$PASSWORD" "$PASSWORD" | \
+        gnokey add "$IK_NAME" -recover -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" 2>&1)
+    if echo "$OUT" | grep -qiE "already exists"; then
+        echo "already exists, skipping"
+    elif echo "$OUT" | grep -qiE "error:|failed to|panic"; then
+        echo "FAILED"
+        echo "$OUT"
+        exit 1
+    else
+        echo "OK"
+    fi
+}
+
+import_key "$KEY" "$RUNNER_MNEMONIC"
 
 if [ -n "$STRESS_MNEMONIC_2" ] && [ "$STRESS_MNEMONIC_2" != "TODO_REPLACE_STRESS_MNEMONIC_2" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_2" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_2" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
+    import_key "stress_2" "$STRESS_MNEMONIC_2"
 fi
 if [ -n "$STRESS_MNEMONIC_3" ] && [ "$STRESS_MNEMONIC_3" != "TODO_REPLACE_STRESS_MNEMONIC_3" ]; then
-    printf "%s\n%s\n%s\n" "$STRESS_MNEMONIC_3" "$PASSWORD" "$PASSWORD" | \
-        gnokey add "stress_3" -recover -insecure-password-stdin=true \
-        -home "$GNOKEY_HOME" > /dev/null 2>&1
+    import_key "stress_3" "$STRESS_MNEMONIC_3"
 fi
 
 # --- sign CLA if required by the network ---
@@ -77,20 +111,35 @@ sign_cla() {
         -insecure-password-stdin=true \
         -home "$GNOKEY_HOME" \
         "$SIGNER_KEY" 2>&1)
-    if echo "$OUT" | grep -q "OK\|already signed\|TX HASH"; then
-        echo "OK"
+    if echo "$OUT" | grep -q "OK!\|TX HASH"; then
+        echo "signed"
+        CLA_SENT=1
+    elif echo "$OUT" | grep -qiE "already signed"; then
+        echo "already signed"
     else
-        echo "signed or skipped"
+        echo "ERROR"
+        echo "$OUT"
+        exit 1
     fi
 }
 
 if [ -n "$CLA_HASH" ]; then
     echo "Signing CLA (hash: $CLA_HASH)..."
+    SEQ_BEFORE=$(gnokey query "auth/accounts/$KEY_ADDR" \
+        -remote "$REMOTE" 2>/dev/null \
+        | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
+    SEQ_BEFORE="${SEQ_BEFORE:-0}"
+
+    CLA_SENT=0
     sign_cla "$KEY"
+
     gnokey list -home "$GNOKEY_HOME" 2>/dev/null | grep -oE '^[0-9]+\. [^ ]+' | awk '{print $2}' | while read -r k; do
         [ "$k" != "$KEY" ] && sign_cla "$k"
     done
-    sleep 10
+
+    if [ "$CLA_SENT" -eq 1 ]; then
+        wait_for_sequence_gte "$KEY_ADDR" $((SEQ_BEFORE + 1))
+    fi
 fi
 echo ""
 

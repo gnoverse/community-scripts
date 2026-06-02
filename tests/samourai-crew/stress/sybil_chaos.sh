@@ -7,6 +7,8 @@
 #   stress_1 (=KEY), stress_2, stress_3 keys imported in GNOKEY_HOME
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=common.sh
+. "$SCRIPT_DIR/common.sh"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 SUFFIX=$(date +%s)
 COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/chaos${SUFFIX}"
@@ -31,6 +33,8 @@ echo ""
 echo "Deploying counter realm..."
 cp "$SCRIPT_DIR/../realms/counter/counter.gno" "$TMPDIR/counter.gno"
 printf 'module = "%s"\ngno = "0.9"\n' "$COUNTER_PKGPATH" > "$TMPDIR/gnomod.toml"
+SEQ_BEFORE=$(get_sequence "$KEY_ADDR")
+SEQ_BEFORE="${SEQ_BEFORE:-0}"
 echo "$PASSWORD" | gnokey maketx addpkg \
     -pkgpath "$COUNTER_PKGPATH" \
     -pkgdir "$TMPDIR" \
@@ -38,6 +42,8 @@ echo "$PASSWORD" | gnokey maketx addpkg \
     -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }
+wait_for_package "$COUNTER_PKGPATH"
+wait_for_sequence_gte "$KEY_ADDR" $((SEQ_BEFORE + 1))
 
 cat > "$TMPDIR/increment.gno" << EOF
 package main
