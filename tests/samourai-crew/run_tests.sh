@@ -175,6 +175,12 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "audit_var_init_order"      /tests/audit/audit_var_init_order.sh
     run_test "audit_cross_realm_recover" /tests/audit/audit_cross_realm_recover.sh \
         "broader pattern not yet fixed, see f87249327"
+    run_test "audit_cross_realm_p_arithmetic" /tests/audit/audit_cross_realm_p_arithmetic.sh
+    run_test "audit_preprocess_alloc_caps"    /tests/audit/audit_preprocess_alloc_caps.sh
+    run_test "audit_panic_log_dos"            /tests/audit/audit_panic_log_dos.sh
+    run_test "audit_map_key_gas"              /tests/audit/audit_map_key_gas.sh
+    run_test "audit_nil_func_call"            /tests/audit/audit_nil_func_call.sh
+    run_test "audit_type_assert_nil"          /tests/audit/audit_type_assert_nil.sh
 
     echo ""
     echo "=== E2E Tests (one-shot) ==="
