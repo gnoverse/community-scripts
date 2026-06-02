@@ -1,9 +1,10 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
-# Vector: link URL hijacking
-# A user-controlled message can contain a link whose display text resembles
-# an official URL while the actual href points to a malicious destination.
-# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
+# PR #5714 MERGED (2026-05-28): p/nt/markdown/sanitize/v0 library now available.
+# Vector: link URL hijacking (phishing)
+# This test realm deliberately omits sanitize.URL() to document the risk.
+# Display text mimics an official URL while href points to a malicious destination.
+# Realm authors must call sanitize.URL() on any user-supplied link href.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh
