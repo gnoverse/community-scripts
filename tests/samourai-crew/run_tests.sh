@@ -189,8 +189,11 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
 
     echo ""
     echo "=== E2E Tests (one-shot) ==="
-    run_test "e2e_counter"        /tests/e2e/e2e_counter.sh
-    run_test "e2e_mempool_stress" /tests/e2e/e2e_mempool_stress.sh
+    run_test "e2e_counter"              /tests/e2e/e2e_counter.sh
+    run_test "e2e_mempool_stress"       /tests/e2e/e2e_mempool_stress.sh
+    run_test "e2e_access_control"       /tests/e2e/e2e_access_control.sh
+    run_test "e2e_cross_realm_callback" /tests/e2e/e2e_cross_realm_callback.sh
+    run_test "e2e_storage_metering"     /tests/e2e/e2e_storage_metering.sh
 
     echo ""
     echo "=== Security Markdown Audit (PR #5714 merged — sanitize library opt-in) ==="
@@ -210,6 +213,8 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "sybil_chaos"        /tests/stress/sybil_chaos.sh
     run_test "sybil_precision"    /tests/stress/sybil_precision.sh
     run_test "sybil_salted_chaos" /tests/stress/sybil_salted_chaos.sh
+    run_test "sybil_oog_spam"     /tests/stress/sybil_oog_spam.sh
+    run_test "sybil_panic_spam"   /tests/stress/sybil_panic_spam.sh
 fi
 
 if [ "$MODE" = "repeatable" ] || [ "$MODE" = "all" ]; then
