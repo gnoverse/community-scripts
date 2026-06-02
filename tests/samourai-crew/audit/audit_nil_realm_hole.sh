@@ -98,15 +98,22 @@ if echo "$DEPLOY_R" | grep -q "OK!"; then echo "OK"; else
 fi
 
 # --- trigger attack ---
+# Use maketx run (not maketx call) — Attack() has no cur realm declaration (PR #5669).
+cat > "$TMPDIR/attack.gno" << EOF
+package main
+
+import v "${PKGPATH_R}"
+
+func main() { v.Attack() }
+EOF
+
 echo -n "   Calling Attack() (PDispatch.UseMutator -> EvilInt.Run -> gSlot.Field)... "
-ATTACK=$(echo "$PASSWORD" | gnokey maketx call \
-	-pkgpath "$PKGPATH_R" \
-	-func "Attack" \
+ATTACK=$(echo "$PASSWORD" | gnokey maketx run \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
-	"$KEY" 2>&1)
+	"$KEY" "$TMPDIR/attack.gno" 2>&1)
 
 # PATCHED: VM panics with "readonly tainted" — transaction rejected
 if echo "$ATTACK" | grep -qi "readonly\|tainted\|cannot.*modif"; then
