@@ -1,9 +1,9 @@
 #!/bin/sh
 # Targets: gnolang/gno#5714 — markdown injection in Render()
+# PR #5714 MERGED (2026-05-28): p/nt/markdown/sanitize/v0 library now available.
 # Vector: raw HTML injection
-# User-supplied HTML content is returned verbatim by Render() and may be
-# rendered by the browser on gno.land if gnoweb does not escape it.
-# KNOWN VULNERABLE on current master — expected regression until #5714 is fixed.
+# This test realm deliberately omits sanitize.Block() to document the risk of
+# naive Render() implementations. Realm authors must call sanitize helpers explicitly.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=common.sh
