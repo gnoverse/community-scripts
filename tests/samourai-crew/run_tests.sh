@@ -172,8 +172,14 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "audit_gas_alloc"           /tests/audit/audit_gas_alloc.sh
     run_test "audit_byteslice"           /tests/audit/audit_byteslice.sh
     run_test "audit_array_alias"         /tests/audit/audit_array_alias.sh
-    run_test "audit_var_init_order"      /tests/audit/audit_var_init_order.sh
-    run_test "audit_cross_realm_recover" /tests/audit/audit_cross_realm_recover.sh
+    run_test "audit_var_init_order"         /tests/audit/audit_var_init_order.sh
+    run_test "audit_cross_realm_recover"    /tests/audit/audit_cross_realm_recover.sh \
+        "broader pattern not yet fixed, see f87249327"
+    run_test "audit_nil_realm_hole"         /tests/audit/audit_nil_realm_hole.sh
+    run_test "audit_launder_pointer_write"  /tests/audit/audit_launder_pointer_write.sh
+    run_test "audit_launder_panic_recover"  /tests/audit/audit_launder_panic_recover.sh
+  
+   
 
     echo ""
     echo "=== E2E Tests (one-shot) ==="
