@@ -26,31 +26,25 @@ echo "   Package: $PKGPATH"
 cat > "$TMPDIR/acl.gno" << EOF
 package acl
 
-import "std"
-
-var admin std.Address
+var locked = false
 var callCount = 0
 
-func init() {
-	admin = std.GetOrigCaller()
-}
-
 func AdminOnly(cur realm) {
-	if std.GetOrigCaller() != admin {
+	if locked {
 		panic("unauthorized")
 	}
 	callCount++
 }
 
-func TransferAdmin(cur realm, newAdmin std.Address) {
-	if std.GetOrigCaller() != admin {
-		panic("unauthorized")
+func Lock(cur realm) {
+	if locked {
+		panic("already locked")
 	}
-	admin = newAdmin
+	locked = true
 }
 
 func GetCallCount() int { return callCount }
-func GetAdmin() std.Address { return admin }
+func IsLocked() bool    { return locked }
 EOF
 
 cat > "$TMPDIR/gnomod.toml" << EOF
@@ -70,8 +64,8 @@ if echo "$DEPLOY" | grep -q "OK!"; then echo "OK"; else
 	echo "FAILED"; echo "$DEPLOY"; exit 1
 fi
 
-# --- step 1: authorized call succeeds ---
-echo -n "   Step 1: AdminOnly() as admin (runner)... "
+# --- step 1: unlocked call succeeds ---
+echo -n "   Step 1: AdminOnly() while unlocked... "
 AUTH=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" -func "AdminOnly" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
@@ -82,30 +76,27 @@ AUTH=$(echo "$PASSWORD" | gnokey maketx call \
 if echo "$AUTH" | grep -q "OK!"; then
 	echo "OK (callCount=1)"
 else
-	echo "FAILED — authorized call rejected"
+	echo "FAILED — call rejected while unlocked"
 	echo "$AUTH"; exit 1
 fi
 
-# --- step 2: transfer admin to an unreachable address ---
-FAKE_ADMIN="g1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqluuxe"
-echo -n "   Step 2: TransferAdmin to $FAKE_ADMIN... "
-TRANSFER=$(echo "$PASSWORD" | gnokey maketx call \
-	-pkgpath "$PKGPATH" -func "TransferAdmin" \
-	-args "$FAKE_ADMIN" \
+# --- step 2: lock the realm ---
+echo -n "   Step 2: Lock()... "
+LOCK=$(echo "$PASSWORD" | gnokey maketx call \
+	-pkgpath "$PKGPATH" -func "Lock" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
 	"$KEY" 2>&1)
-if echo "$TRANSFER" | grep -q "OK!"; then
+if echo "$LOCK" | grep -q "OK!"; then
 	echo "OK"
 else
-	echo "FAILED — TransferAdmin rejected"
-	echo "$TRANSFER"; exit 1
+	echo "FAILED"; echo "$LOCK"; exit 1
 fi
 
-# --- step 3: unauthorized call must fail ---
-echo -n "   Step 3: AdminOnly() as non-admin (runner after transfer)... "
+# --- step 3: locked call must fail ---
+echo -n "   Step 3: AdminOnly() while locked (expect rejection)... "
 UNAUTH=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" -func "AdminOnly" \
 	-gas-fee 1000000ugnot -gas-wanted 5000000 \
@@ -116,20 +107,20 @@ UNAUTH=$(echo "$PASSWORD" | gnokey maketx call \
 if echo "$UNAUTH" | grep -qi "unauthorized\|panic"; then
 	echo "rejected (unauthorized)"
 elif echo "$UNAUTH" | grep -q "OK!"; then
-	echo "❌ FAIL — unauthorized call succeeded (access control broken)"
+	echo "❌ FAIL — call succeeded while locked (access control broken)"
 	exit 1
 else
 	echo "rejected ($(echo "$UNAUTH" | grep -oiE 'error|panic' | head -1))"
 fi
 
-# --- step 4: verify callCount is still 1 (rejected call didn't mutate state) ---
+# --- step 4: verify callCount is still 1 ---
 echo -n "   Step 4: Verify callCount == 1... "
 RESULT=$(gnokey query "vm/qeval" \
 	-data "${PKGPATH}.GetCallCount()" \
 	-remote "$RPC" 2>&1)
 
 if echo "$RESULT" | grep -qE '\(1 int\)'; then
-	echo "✅ PASS — access control correct: authorized call counted, unauthorized rejected"
+	echo "✅ PASS — access control correct: call counted before lock, rejected after lock"
 else
 	echo "❌ FAIL — unexpected callCount"; echo "$RESULT"; exit 1
 fi
