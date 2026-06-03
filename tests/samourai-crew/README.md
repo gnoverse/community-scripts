@@ -183,8 +183,8 @@ Exit 0 = ✅ PATCHED — exit 1 = ❌ VULNERABLE.
 These scripts document **application-level security bugs** found in
 `examples/gno.land/` during a manual source-code audit on 2026-06-02. Unlike
 the GnoVM audits above, these bugs have not been fixed yet — no issue or open PR
-existed at the time of discovery. Scripts exit 0 with `[KNOWN_VULNERABLE]` while
-the issues remain open, and automatically flip to `[PASS]` once the fixes land.
+existed at the time of discovery. Scripts exit 1 with `[NEW]` while the bugs
+remain unreported upstream, and automatically flip to `[PASS]` once the fixes land.
 
 The full audit report (7 HIGH, 11 MEDIUM) is at
 [`AUDIT_SECURITY_2026-06-02.md`](AUDIT_SECURITY_2026-06-02.md). This suite covers the 3 findings
@@ -279,8 +279,9 @@ after the load.
 
 ## Exit code conventions
 
-| Exit | Label | Meaning |
-| --- | --- | --- |
-| 0 | `[PASS]` | Expected behavior confirmed (fix present, or test passed) |
-| 0 | `[KNOWN_VULNERABLE]` | Bug confirmed present, no fix merged yet on this network |
-| 1 | `[FAIL]` | Unexpected result — investigate |
+| Exit | Summary label | Script output | Meaning |
+| --- | --- | --- | --- |
+| 0 | `[PASS]` | `[PASS]` | Expected behavior confirmed (fix present, or test passed) |
+| 1 | `[NEW]` | `[KNOWN_VULNERABLE]` | Bug confirmed, not yet reported upstream — no issue or PR exists |
+| 1 | `[KNOWN]` | `[KNOWN_VULNERABLE]` | Bug confirmed, tracked upstream with an open issue or PR |
+| 1 | `[FAIL]` | `[FAIL]` | Unexpected result — investigate |
