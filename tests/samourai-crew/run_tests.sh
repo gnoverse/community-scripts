@@ -144,17 +144,21 @@ fi
 echo ""
 
 # --- test runner ---
-PASS=0; FAIL=0; KNOWN=0; REPORT=""
+PASS=0; FAIL=0; KNOWN=0; NEW=0; REPORT=""
 
 run_test() {
     NAME="$1"
     SCRIPT="$2"
     KNOWN_NOTE="$3"
+    NEW_NOTE="$4"
     echo ""
     echo "--- $NAME ---"
     if "$SCRIPT"; then
         PASS=$((PASS + 1))
         REPORT="${REPORT}  [PASS]  $NAME\n"
+    elif [ -n "$NEW_NOTE" ]; then
+        NEW=$((NEW + 1))
+        REPORT="${REPORT}  [NEW]   $NAME — $NEW_NOTE\n"
     elif [ -n "$KNOWN_NOTE" ]; then
         KNOWN=$((KNOWN + 1))
         REPORT="${REPORT}  [KNOWN] $NAME — $KNOWN_NOTE\n"
@@ -184,8 +188,15 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "audit_nil_realm_hole"         /tests/audit/audit_nil_realm_hole.sh
     run_test "audit_launder_pointer_write"  /tests/audit/audit_launder_pointer_write.sh
     run_test "audit_launder_panic_recover"  /tests/audit/audit_launder_panic_recover.sh
-  
-   
+
+    echo ""
+    echo "=== Security App Audit (realm application bugs) ==="
+    run_test "audit_blog_revocation"         /tests/audit/audit_blog_revocation.sh \
+        "" "H1: blog revocation broken (BPTree.Set vs Remove) — unreported, see AUDIT_SECURITY_2026-06-02.md"
+    run_test "audit_profile_realm_spoof"     /tests/audit/audit_profile_realm_spoof.sh \
+        "" "H7: profile missing IsUserCall guard — unreported, see AUDIT_SECURITY_2026-06-02.md"
+    run_test "audit_profile_arbitrary_field" /tests/audit/audit_profile_arbitrary_field.sh \
+        "" "M8: profile arbitrary field names accepted — unreported, see AUDIT_SECURITY_2026-06-02.md"
 
     echo ""
     echo "=== E2E Tests (one-shot) ==="
@@ -229,7 +240,7 @@ echo "  TEST SUMMARY"
 echo "========================================="
 printf "%b" "$REPORT"
 echo "-----------------------------------------"
-echo "  PASS: $PASS   FAIL: $FAIL   KNOWN: $KNOWN"
+echo "  PASS: $PASS   FAIL: $FAIL   KNOWN: $KNOWN   NEW: $NEW"
 echo "========================================="
 
 if [ "$FAIL" -gt 0 ]; then
