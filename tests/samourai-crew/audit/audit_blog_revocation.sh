@@ -122,6 +122,7 @@ if echo "$MOD" | grep -q "OK!"; then
 	echo "   [KNOWN_VULNERABLE] — revoked moderator can still call ModOnlyAction"
 	echo "   Root cause: BPTree.Set(addr, false) leaves 'found=true', isModerator() returns true"
 	echo "   Fix: use moderatorList.Remove(addr.String()) in AdminRemoveModerator"
+	exit 1
 elif echo "$MOD" | grep -qi "not moderator\|panic\|unauthorized"; then
 	echo ""
 	echo "   [PASS] — revocation is effective, ModOnlyAction correctly rejected"

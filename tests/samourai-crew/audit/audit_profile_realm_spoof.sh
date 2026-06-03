@@ -124,6 +124,7 @@ if echo "$REALM_PROFILE" | grep -q "$TEST_VALUE"; then
 		echo "   REALM_ADDR : $REALM_ADDR (has profile)"
 		echo "   EOA_ADDR   : $KEY_ADDR (no profile)"
 		echo "   Fix: add 'if !cur.Previous().IsUserCall() { panic(...) }' to each setter"
+		exit 1
 	fi
 else
 	echo "not found — unexpected"

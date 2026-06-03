@@ -63,6 +63,7 @@ if echo "$CALL" | grep -q "OK!"; then
 		echo "   [KNOWN_VULNERABLE] — arbitrary field '$TEST_FIELD' accepted and persisted"
 		echo "   Fix: validate 'field' against stringFields allowlist before writing"
 		echo "        if _, ok := stringFields[field]; !ok { panic(\"profile: unknown field: \" + field) }"
+		exit 1
 	else
 		echo "not found (unexpected)"
 		echo "$READ"
