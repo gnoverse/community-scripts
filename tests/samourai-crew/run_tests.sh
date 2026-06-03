@@ -184,8 +184,15 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "audit_nil_realm_hole"         /tests/audit/audit_nil_realm_hole.sh
     run_test "audit_launder_pointer_write"  /tests/audit/audit_launder_pointer_write.sh
     run_test "audit_launder_panic_recover"  /tests/audit/audit_launder_panic_recover.sh
-  
-   
+
+    echo ""
+    echo "=== Security App Audit (realm application bugs) ==="
+    run_test "audit_blog_revocation"         /tests/audit/audit_blog_revocation.sh \
+        "H1: blog moderator revocation broken — BPTree.Set(false) vs Remove, no fix merged"
+    run_test "audit_profile_realm_spoof"     /tests/audit/audit_profile_realm_spoof.sh \
+        "H7: profile SetStringField missing IsUserCall guard, no fix merged"
+    run_test "audit_profile_arbitrary_field" /tests/audit/audit_profile_arbitrary_field.sh \
+        "M8: profile SetStringField accepts arbitrary field names, no fix merged"
 
     echo ""
     echo "=== E2E Tests (one-shot) ==="
