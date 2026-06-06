@@ -19,12 +19,16 @@ package main
 func main() {}
 EOF
 
-# Tx 1: normal broadcast, auto-sequence (should succeed)
-echo -n "   Tx 1 — normal broadcast... "
+# Tx 1: normal broadcast, explicit sequence (should succeed)
+CURRENT_SEQ=$(gnokey query "auth/accounts/${KEY_ADDR}" -remote "$RPC" 2>/dev/null \
+    | grep -oE '"sequence"[^,}0-9]*[0-9]+' | grep -oE '[0-9]+$')
+CURRENT_SEQ="${CURRENT_SEQ:-0}"
+echo -n "   Tx 1 — normal broadcast (seq=$CURRENT_SEQ)... "
 TX1=$(echo "$PASSWORD" | gnokey maketx run \
 	-gas-fee 1000000ugnot -gas-wanted 1000000 \
+	-sequence "$CURRENT_SEQ" \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
-	-insecure-password-stdin \
+	-insecure-password-stdin=true \
 	-home "$GNOKEY_HOME" \
 	"$KEY" "$TMPDIR/noop.gno" 2>&1)
 

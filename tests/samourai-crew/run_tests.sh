@@ -173,6 +173,7 @@ if [ -n "$CLA_HASH" ]; then
 
     if [ "$CLA_SENT" -eq 1 ]; then
         wait_for_sequence_gte "$KEY_ADDR" $((SEQ_BEFORE + 1))
+        sleep 2
     fi
 fi
 echo ""
