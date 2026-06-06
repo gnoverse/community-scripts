@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/common.sh"
 
 SUFFIX=$(date +%s)
-PKGPATH="gno.land/r/${KEY_ADDR}/audit/testprofilecaller${SUFFIX}"
+PKGPATH="gno.land/r/${NAMESPACE}/audit/testprofilecaller${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -57,7 +57,7 @@ EOF
 echo -n "   Deploying testprofilecaller realm... "
 DEPLOY=$(echo "$PASSWORD" | gnokey maketx addpkg \
 	-pkgpath "$PKGPATH" -pkgdir "$TMPDIR" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
@@ -84,7 +84,7 @@ echo -n "   Step 1: SpoofProfile(\"$TEST_FIELD\", \"$TEST_VALUE\")... "
 SPOOF=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" -func "SpoofProfile" \
 	-args "$TEST_FIELD" -args "$TEST_VALUE" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \

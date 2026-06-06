@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/../audit/common.sh"
 
 SUFFIX=$(date +%s)
-PKGPATH="gno.land/r/${KEY_ADDR}/e2e/storage${SUFFIX}"
+PKGPATH="gno.land/r/${NAMESPACE}/e2e/storage${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -41,7 +41,7 @@ EOF
 echo -n "   Deploying storage realm... "
 DEPLOY=$(echo "$PASSWORD" | gnokey maketx addpkg \
 	-pkgpath "$PKGPATH" -pkgdir "$TMPDIR" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \

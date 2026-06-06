@@ -2,6 +2,8 @@
 # Shared helpers for stress test scripts.
 # REMOTE must be exported by the caller (run_tests.sh via env).
 
+NAMESPACE="${NAMESPACE:-${KEY_ADDR}}"
+
 # Poll vm/qeval until the package is accessible (max 30s).
 # Non-fatal on timeout — the subsequent transactions will surface the real error.
 wait_for_package() {

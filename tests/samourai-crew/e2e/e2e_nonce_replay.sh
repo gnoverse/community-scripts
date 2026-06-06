@@ -24,7 +24,7 @@ echo -n "   Tx 1 — normal broadcast... "
 TX1=$(echo "$PASSWORD" | gnokey maketx run \
 	-gas-fee 1000000ugnot -gas-wanted 1000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
-	-insecure-password-stdin \
+	-insecure-password-stdin=true \
 	-home "$GNOKEY_HOME" \
 	"$KEY" "$TMPDIR/noop.gno" 2>&1)
 

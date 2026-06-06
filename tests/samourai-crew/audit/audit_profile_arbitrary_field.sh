@@ -43,7 +43,7 @@ echo -n "   SetStringField(\"$TEST_FIELD\", \"$TEST_VALUE\")... "
 CALL=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PROFILE_PKGPATH" -func "SetStringField" \
 	-args "$TEST_FIELD" -args "$TEST_VALUE" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \

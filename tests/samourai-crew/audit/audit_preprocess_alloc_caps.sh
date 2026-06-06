@@ -52,7 +52,7 @@ EOF
 echo -n "   Test 1: deploying 10-level embed chain (expect rejection)... "
 DEEP=$(timeout 30 sh -c "echo '$PASSWORD' | gnokey maketx addpkg \
 	-pkgpath '$PKGPATH_DEEP' -pkgdir '$TMPDIR/deep' \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid '$CHAINID' -remote '$RPC' \
 	-insecure-password-stdin \
 	-home '$GNOKEY_HOME' \
@@ -96,7 +96,7 @@ EOF
 echo -n "   Test 2: deploying 6-level embed chain (expect success)... "
 SHALLOW=$(echo "$PASSWORD" | gnokey maketx addpkg \
 	-pkgpath "$PKGPATH_SHALLOW" -pkgdir "$TMPDIR/shallow" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \

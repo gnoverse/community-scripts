@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/common.sh"
 
 SUFFIX=$(date +%s)
-PKGPATH="gno.land/r/${KEY_ADDR}/audit/testblog${SUFFIX}"
+PKGPATH="gno.land/r/${NAMESPACE}/audit/testblog${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -84,7 +84,7 @@ echo -n "   Step 1: AddModerator($KEY_ADDR)... "
 ADD=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" -func "AddModerator" \
 	-args "$KEY_ADDR" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
@@ -98,7 +98,7 @@ echo -n "   Step 2: RemoveModerator($KEY_ADDR)... "
 REM=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" -func "RemoveModerator" \
 	-args "$KEY_ADDR" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
@@ -111,7 +111,7 @@ fi
 echo -n "   Step 3: ModOnlyAction() as revoked moderator (expect: still works = KNOWN_VULNERABLE)... "
 MOD=$(echo "$PASSWORD" | gnokey maketx call \
 	-pkgpath "$PKGPATH" -func "ModOnlyAction" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \

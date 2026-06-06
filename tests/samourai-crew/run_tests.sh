@@ -18,6 +18,7 @@ export GNOKEY_HOME="${GNOKEY_HOME:-/tmp/gnokey}"
 export KEY="runner"
 export PASSWORD="runner1234"
 export KEY_ADDR="${RUNNER_ADDR}"
+export NAMESPACE="${NAMESPACE:-nym-samcrew123}"
 
 # Poll auth/accounts until the account sequence for ADDR is >= EXPECTED.
 # Exits 0 (non-fatal) after 30s even if not reached — tests will surface the real error.
@@ -47,6 +48,38 @@ echo "Mode   : $MODE"
 echo "Runner : $KEY_ADDR"
 echo ""
 
+# --- namespace check/register ---
+check_or_register_namespace() {
+    NAME="$NAMESPACE"
+    RESULT=$(gnokey query vm/qrender \
+        -data "gno.land/r/sys/namereg/v1:${NAME}" \
+        -remote "$REMOTE" 2>&1)
+    if echo "$RESULT" | grep -qF "$KEY_ADDR"; then
+        echo "Namespace ${NAME} already registered."
+        return 0
+    fi
+    echo "Namespace ${NAME} not found, registering..."
+    OUT=$(echo "$PASSWORD" | gnokey maketx call \
+        -pkgpath gno.land/r/sys/namereg/v1 \
+        -func Register \
+        -args "$NAME" \
+        -gas-wanted 50000000 \
+        -gas-fee 1000000ugnot \
+        -broadcast \
+        -chainid "$CHAINID" \
+        -remote "$REMOTE" \
+        -insecure-password-stdin=true \
+        -home "$GNOKEY_HOME" \
+        "$KEY" 2>&1)
+    if echo "$OUT" | grep -q "OK!\|TX HASH"; then
+        echo "Namespace ${NAME} registered."
+    else
+        echo "ERROR: failed to register namespace ${NAME}"
+        echo "$OUT"
+        exit 1
+    fi
+}
+
 # --- connectivity check ---
 echo "Checking connectivity..."
 RETRIES=10
@@ -59,6 +92,7 @@ while [ "$RETRIES" -gt 0 ]; do
     [ "$RETRIES" -eq 0 ] && echo "ERROR: cannot reach $REMOTE" && exit 1
     sleep 3
 done
+check_or_register_namespace
 
 # --- import all keys before CLA signing ---
 import_key() {
@@ -104,7 +138,7 @@ sign_cla() {
         -func "Sign" \
         -args "$CLA_HASH" \
         -gas-fee 1000000ugnot \
-        -gas-wanted 10000000 \
+        -gas-wanted 20000000 \
         -broadcast \
         -chainid "$CHAINID" \
         -remote "$REMOTE" \
@@ -139,6 +173,7 @@ if [ -n "$CLA_HASH" ]; then
 
     if [ "$CLA_SENT" -eq 1 ]; then
         wait_for_sequence_gte "$KEY_ADDR" $((SEQ_BEFORE + 1))
+        sleep 2
     fi
 fi
 echo ""
