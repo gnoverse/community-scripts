@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/common.sh"
 TX_PER_ACCOUNT="${TX_PER_ACCOUNT:-10}"
 SUFFIX=$(date +%s)
-COUNTER_PKGPATH="gno.land/r/${KEY_ADDR}/stress/salted${SUFFIX}"
+COUNTER_PKGPATH="gno.land/r/${NAMESPACE}/stress/salted${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -33,7 +33,7 @@ SEQ_BEFORE="${SEQ_BEFORE:-0}"
 echo "$PASSWORD" | gnokey maketx addpkg \
     -pkgpath "$COUNTER_PKGPATH" \
     -pkgdir "$TMPDIR" \
-    -gas-fee 1000000ugnot -gas-wanted 10000000 \
+    -gas-fee 1000000ugnot -gas-wanted 20000000 \
     -broadcast -chainid "$CHAINID" -remote "$REMOTE" \
     -insecure-password-stdin=true -home "$GNOKEY_HOME" \
     "$KEY" > /dev/null || { echo "FAIL: could not deploy counter"; exit 1; }

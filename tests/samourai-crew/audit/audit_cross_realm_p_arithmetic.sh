@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 SUFFIX=$(date +%s)
 PKGPATH_P="gno.land/p/${KEY_ADDR}/audit/pcounter${SUFFIX}"
-PKGPATH_R="gno.land/r/${KEY_ADDR}/audit/arithmetic${SUFFIX}"
+PKGPATH_R="gno.land/r/${NAMESPACE}/audit/arithmetic${SUFFIX}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -39,7 +39,7 @@ EOF
 echo -n "   Deploying /p/ Counter... "
 DEPLOY_P=$(echo "$PASSWORD" | gnokey maketx addpkg \
 	-pkgpath "$PKGPATH_P" -pkgdir "$TMPDIR/p" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
@@ -71,7 +71,7 @@ EOF
 echo -n "   Deploying realm... "
 DEPLOY_R=$(echo "$PASSWORD" | gnokey maketx addpkg \
 	-pkgpath "$PKGPATH_R" -pkgdir "$TMPDIR/r" \
-	-gas-fee 1000000ugnot -gas-wanted 10000000 \
+	-gas-fee 1000000ugnot -gas-wanted 20000000 \
 	-broadcast -chainid "$CHAINID" -remote "$RPC" \
 	-insecure-password-stdin \
 	-home "$GNOKEY_HOME" \
