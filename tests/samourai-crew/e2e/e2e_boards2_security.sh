@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/../audit/common.sh"
 
 SUFFIX=$(date +%s)
-BOARD_NAME="testsec${SUFFIX}"
+BOARD_NAME="samcrew-test-security${SUFFIX}"
 PASS_COUNT=0
 FAIL_COUNT=0
 

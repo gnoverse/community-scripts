@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/../audit/common.sh"
 
 SUFFIX=$(date +%s)
-BOARD_NAME="testdel${SUFFIX}"
+BOARD_NAME="samcrew-test-delete${SUFFIX}"
 REPLY_BODY="Ghost test reply — should disappear after delete."
 
 echo "🗑  BOARDS2 DELETE TEST"
