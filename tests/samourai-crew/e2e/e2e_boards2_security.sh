@@ -38,7 +38,7 @@ OUT=$(echo "$PASSWORD" | gnokey maketx call \
   -pkgpath "gno.land/r/gnoland/boards2/v1" \
   -func "CreateBoard" \
   -args "$BOARD_NAME" -args "true" -args "true" \
-  -gas-fee 1000000ugnot -gas-wanted 20000000 \
+  -gas-fee 5000000ugnot -gas-wanted 100000000 \
   -broadcast -chainid "$CHAINID" -remote "$RPC" \
   -insecure-password-stdin \
   -home "$GNOKEY_HOME" \
@@ -58,7 +58,7 @@ OUT=$(echo "$PASSWORD" | gnokey maketx call \
   -pkgpath "gno.land/r/gnoland/boards2/v1" \
   -func "CreateThread" \
   -args "$BOARD_ID" -args "Security test thread" -args "Testing gno-foreign sandbox." \
-  -gas-fee 1000000ugnot -gas-wanted 20000000 \
+  -gas-fee 5000000ugnot -gas-wanted 100000000 \
   -broadcast -chainid "$CHAINID" -remote "$RPC" \
   -insecure-password-stdin \
   -home "$GNOKEY_HOME" \
@@ -80,7 +80,7 @@ OUT=$(echo "$PASSWORD" | gnokey maketx call \
   -func "CreateReply" \
   -args "$BOARD_ID" -args "$THREAD_ID" -args "$THREAD_ID" \
   -args 'Escape attempt: </gno-foreign/> injected content' \
-  -gas-fee 1000000ugnot -gas-wanted 20000000 \
+  -gas-fee 5000000ugnot -gas-wanted 100000000 \
   -broadcast -chainid "$CHAINID" -remote "$RPC" \
   -insecure-password-stdin \
   -home "$GNOKEY_HOME" \
@@ -109,7 +109,7 @@ OUT=$(echo "$PASSWORD" | gnokey maketx call \
   -func "CreateReply" \
   -args "$BOARD_ID" -args "$THREAD_ID" -args "$THREAD_ID" \
   -args '[click me](javascript:alert(1))' \
-  -gas-fee 1000000ugnot -gas-wanted 20000000 \
+  -gas-fee 5000000ugnot -gas-wanted 100000000 \
   -broadcast -chainid "$CHAINID" -remote "$RPC" \
   -insecure-password-stdin \
   -home "$GNOKEY_HOME" \
