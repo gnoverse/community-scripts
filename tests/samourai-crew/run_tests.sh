@@ -242,6 +242,15 @@ if [ "$MODE" = "one-shot" ] || [ "$MODE" = "all" ]; then
     run_test "e2e_storage_metering"     /tests/e2e/e2e_storage_metering.sh
 
     echo ""
+    echo "=== Boards2 E2E Tests (gno.land/r/gnoland/boards2/v1, PR #5759) ==="
+    run_test "e2e_boards2_flow"     /tests/e2e/e2e_boards2_flow.sh \
+        "" "requires realm-admin grant for runner: InviteMember(0, \$KEY_ADDR, \"admin\") on r/gnoland/boards2/v1, else CreateBoard panics with PermissionBoardCreate unauthorized"
+    run_test "e2e_boards2_security" /tests/e2e/e2e_boards2_security.sh \
+        "" "requires realm-admin grant for runner: InviteMember(0, \$KEY_ADDR, \"admin\") on r/gnoland/boards2/v1, else CreateBoard panics with PermissionBoardCreate unauthorized"
+    run_test "e2e_boards2_delete"   /tests/e2e/e2e_boards2_delete.sh \
+        "" "requires realm-admin grant for runner: InviteMember(0, \$KEY_ADDR, \"admin\") on r/gnoland/boards2/v1, else CreateBoard panics with PermissionBoardCreate unauthorized"
+
+    echo ""
     echo "=== Security Markdown Audit (PR #5714 merged — sanitize library opt-in) ==="
     run_test "audit_md_title_leak"     /tests/security-markdown/audit_md_title_leak.sh \
         "naive realm without sanitize.InlineText — unsafe pattern documented, see gnolang/gno#5714"

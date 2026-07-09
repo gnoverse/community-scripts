@@ -24,7 +24,7 @@ jobs:
   run:
     uses: ./.github/workflows/ci.yml
     with:
-      remote: ${{ vars.REMOTE_TEST13 || 'https://rpc.test-13-aeddi-1.gnoland.network' }}
+      remote: ${{ vars.REMOTE_TEST13 || 'https://rpc.test13.testnets.gno.land' }}
       chain_id: ${{ vars.CHAINID_TEST13 || 'test-13' }}
       funder_script: ./funders/test-13.sh
       test_type: ${{ inputs.test_type || 'both' }}
